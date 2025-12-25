@@ -1,0 +1,9 @@
+{
+  "name": "@runes/biome-config",
+  "version": "0.0.1",
+  "private": true,
+  "license": "MIT",
+  "peerDependencies": {
+    "@biomejs/biome": ">=2.3.10"
+  }
+}

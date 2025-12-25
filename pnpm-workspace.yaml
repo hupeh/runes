@@ -1,0 +1,7 @@
+packages:
+  - internal/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - esbuild
+  - simple-git-hooks

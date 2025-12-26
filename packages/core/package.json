@@ -19,8 +19,11 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@runes/store": "workspace:*",
+		"@runes/i18n": "workspace:*",
 		"@tanstack/react-query": "^5.90.12",
-		"@runes/store": "workspace:*"
+		"inflection": "^3.0.2",
+		"lodash": "^4.17.21"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.10",
@@ -28,11 +31,12 @@
 		"@runes/typescript-config": "workspace:*",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/react": "^16.1.0",
+		"@types/lodash": "^4.17.21",
 		"@types/node": "^20.0.0",
 		"@types/react": "^19.0.0",
 		"@vitejs/plugin-react": "^4.3.4",
-		"jsdom": "^27.3.0",
 		"jiti": "^2.4.2",
+		"jsdom": "^27.3.0",
 		"react": "^19.0.2",
 		"react-router": "^7.11.0",
 		"typescript": "^5.9.3",

@@ -1,3 +1,4 @@
+import { useEventCallback } from "@runes/misc";
 import {
 	type MutateOptions,
 	type QueryKey,
@@ -105,12 +106,11 @@ export const useCreate = <
 		...mutationOptions
 	} = options;
 
-	const dataProviderCreate = (
-		resource: string,
-		params: CreateParams<DataType>,
-	) => {
-		return dataProvider.create<DataType, ResultType>(resource, params);
-	};
+	const dataProviderCreate = useEventCallback(
+		(resource: string, params: CreateParams<DataType>) => {
+			return dataProvider.create<DataType, ResultType>(resource, params);
+		},
+	);
 
 	const [mutate, mutationResult] = useMutationWithMutationMode<
 		MutationErrorType,
@@ -211,27 +211,29 @@ export const useCreate = <
 		},
 	);
 
-	const create = (
-		callTimeResource: string | undefined = resource,
-		callTimeParams: Partial<CreateParams<DataType>> = {},
-		callTimeOptions: MutateOptions<
-			ResultType,
-			MutationErrorType,
-			Partial<UseCreateMutateParams<DataType>>,
-			OnMutateResult
-		> & {
-			mutationMode?: MutationMode;
-			returnPromise?: boolean;
-		} = {},
-	) => {
-		return mutate(
-			{
-				resource: callTimeResource,
-				...callTimeParams,
-			},
-			callTimeOptions,
-		);
-	};
+	const create = useEventCallback(
+		(
+			callTimeResource: string | undefined = resource,
+			callTimeParams: Partial<CreateParams<DataType>> = {},
+			callTimeOptions: MutateOptions<
+				ResultType,
+				MutationErrorType,
+				Partial<UseCreateMutateParams<DataType>>,
+				OnMutateResult
+			> & {
+				mutationMode?: MutationMode;
+				returnPromise?: boolean;
+			} = {},
+		) => {
+			return mutate(
+				{
+					resource: callTimeResource,
+					...callTimeParams,
+				},
+				callTimeOptions,
+			);
+		},
+	);
 
 	return [create, mutationResult];
 };

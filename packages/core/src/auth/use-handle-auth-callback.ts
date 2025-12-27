@@ -1,7 +1,8 @@
-import { useRedirect } from "@runes/core";
 import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useLocation } from "react-router";
+import { useRedirect } from "../core";
+import { noop, useEventCallback } from "../util";
 import type { AuthRedirectResult } from "./types";
 import { useAuthContext } from "./use-auth-context";
 
@@ -83,52 +84,55 @@ export function useHandleAuthCallback(options?: UseHandleAuthCallbackOptions) {
 		...queryOptions,
 	});
 
+	const onSuccessEvent = useEventCallback(
+		onSuccess ??
+			((data: any) => {
+				// AuthProviders relying on a third party services redirect back to the app can't
+				// use the location state to store the path on which the user was before the login.
+				// So we support a fallback on the localStorage.
+				// 默认行为：自动重定向
+				// 依赖第三方服务重定向回应用的 AuthProvider 无法
+				// 使用 location state 来存储用户登录前所在的路径
+				// 因此我们支持使用 localStorage 作为后备方案
+				const previousLocation = localStorage.getItem(
+					PreviousLocationStorageKey,
+				);
+				const redirectTo =
+					(data as AuthRedirectResult)?.redirectTo ?? previousLocation;
+				if (redirectTo === false) {
+					return;
+				}
+
+				redirect(redirectTo ?? defaultRedirectUrl);
+			}),
+	);
+	const onErrorEvent = useEventCallback(onError ?? noop);
+	const onSettledEvent = useEventCallback(onSettled ?? noop);
+
 	// 处理错误
-	// biome-ignore lint/correctness/useExhaustiveDependencies: onError 是回调函数，不应作为依赖
 	useEffect(() => {
-		if (!onError || queryResult.error == null || queryResult.isFetching) {
+		if (queryResult.error == null || queryResult.isFetching) {
 			return;
 		}
-		onError(queryResult.error);
-	}, [queryResult.error, queryResult.isFetching]);
+		onErrorEvent(queryResult.error);
+	}, [onErrorEvent, queryResult.error, queryResult.isFetching]);
 
 	// 处理成功
-	// biome-ignore lint/correctness/useExhaustiveDependencies: onSuccess、redirect、defaultRedirectUrl 是回调函数和稳定值，不应作为依赖
 	useEffect(() => {
 		if (queryResult.data === undefined || queryResult.isFetching) {
 			return;
 		}
-
-		if (onSuccess) {
-			onSuccess(queryResult.data);
-			return;
-		}
-
-		// 默认行为：自动重定向
-		// 依赖第三方服务重定向回应用的 AuthProvider 无法
-		// 使用 location state 来存储用户登录前所在的路径
-		// 因此我们支持使用 localStorage 作为后备方案
-		const previousLocation = localStorage.getItem(PreviousLocationStorageKey);
-		const redirectTo =
-			(queryResult.data as AuthRedirectResult)?.redirectTo ?? previousLocation;
-
-		if (redirectTo !== false) {
-			redirect(redirectTo ?? defaultRedirectUrl);
-		}
-	}, [queryResult.data, queryResult.isFetching]);
+		onSuccessEvent(queryResult.data);
+	}, [onSuccessEvent, queryResult.data, queryResult.isFetching]);
 
 	// 处理 settled
-	// biome-ignore lint/correctness/useExhaustiveDependencies: onSettled 是回调函数，不应作为依赖
 	useEffect(() => {
-		if (
-			!onSettled ||
-			queryResult.status === "pending" ||
-			queryResult.isFetching
-		) {
+		if (queryResult.status === "pending" || queryResult.isFetching) {
 			return;
 		}
-		onSettled(queryResult.data, queryResult.error);
+		onSettledEvent(queryResult.data, queryResult.error);
 	}, [
+		onSettledEvent,
 		queryResult.data,
 		queryResult.error,
 		queryResult.status,

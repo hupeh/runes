@@ -4,6 +4,7 @@ import {
 	useQuery,
 } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { noop, useEventCallback } from "../util";
 import { useAuthContext } from "./use-auth-context";
 import { useLogoutIfAccessDenied } from "./use-logout-if-access-denied";
 
@@ -85,20 +86,22 @@ export function usePermissions<PermissionsType = any, ErrorType = Error>(
 		...queryOptions,
 	});
 
-	const onErrorEvent =
+	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
+	const onSettledEvent = useEventCallback(onSettled ?? noop);
+	const onErrorEvent = useEventCallback(
 		onError ??
-		((error: ErrorType) => {
-			if (process.env.NODE_ENV === "development") {
-				console.error(error);
-			}
-			logoutIfAccessDenied(error);
-		});
+			((error: ErrorType) => {
+				if (process.env.NODE_ENV === "development") {
+					console.error(error);
+				}
+				logoutIfAccessDenied(error);
+			}),
+	);
 
 	useEffect(() => {
-		if (!onSuccess) return;
 		if (queryResult.data === undefined || queryResult.isFetching) return;
-		onSuccess(queryResult.data);
-	}, [onSuccess, queryResult.data, queryResult.isFetching]);
+		onSuccessEvent(queryResult.data);
+	}, [onSuccessEvent, queryResult.data, queryResult.isFetching]);
 
 	useEffect(() => {
 		if (queryResult.error == null || queryResult.isFetching) return;
@@ -106,11 +109,10 @@ export function usePermissions<PermissionsType = any, ErrorType = Error>(
 	}, [onErrorEvent, queryResult.error, queryResult.isFetching]);
 
 	useEffect(() => {
-		if (!onSettled) return;
 		if (queryResult.status === "pending" || queryResult.isFetching) return;
-		onSettled(queryResult.data, queryResult.error);
+		onSettledEvent(queryResult.data, queryResult.error);
 	}, [
-		onSettled,
+		onSettledEvent,
 		queryResult.data,
 		queryResult.error,
 		queryResult.status,

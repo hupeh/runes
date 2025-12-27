@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useNotify } from "../notification";
-import { getErrorMessage } from "../util";
+import { getErrorMessage, noop, useEventCallback } from "../util";
 import { useAuthContext } from "./use-auth-context";
 import { useLogout } from "./use-logout";
 
@@ -98,32 +98,34 @@ export function useAuthState<ErrorType = Error>(
 		...options,
 	});
 
-	const onErrorEvent =
+	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
+	const onSettledEvent = useEventCallback(onSettled ?? noop);
+	const onErrorEvent = useEventCallback(
 		onError ??
-		((error: any) => {
-			if (!logoutOnFailure) return;
+			((error: any) => {
+				if (!logoutOnFailure) return;
 
-			const loginUrl =
-				error?.redirectTo != null
-					? error.redirectTo
-					: (authProvider.loginUrl ?? "/login");
+				const loginUrl =
+					error?.redirectTo != null
+						? error.redirectTo
+						: (authProvider.loginUrl ?? "/login");
 
-			logout({}, loginUrl);
+				logout({}, loginUrl);
 
-			const shouldSkipNotify = error?.message === false;
-			if (!shouldSkipNotify) {
-				const message = getErrorMessage(error, "ra.auth.auth_check_error");
-				notify(message, { type: "error" });
-			}
-		});
+				const shouldSkipNotify = error?.message === false;
+				if (!shouldSkipNotify) {
+					const message = getErrorMessage(error, "ra.auth.auth_check_error");
+					notify(message, { type: "error" });
+				}
+			}),
+	);
 
 	useEffect(() => {
-		if (!onSuccess) return;
 		if (queryResult.data === undefined || queryResult.isFetching) return;
 		if (queryOptions.enabled === false) return;
-		onSuccess(queryResult.data);
+		onSuccessEvent(queryResult.data);
 	}, [
-		onSuccess,
+		onSuccessEvent,
 		queryResult.data,
 		queryResult.isFetching,
 		queryOptions.enabled,
@@ -141,12 +143,11 @@ export function useAuthState<ErrorType = Error>(
 	]);
 
 	useEffect(() => {
-		if (!onSettled) return;
 		if (queryResult.status === "pending" || queryResult.isFetching) return;
 		if (queryOptions.enabled === false) return;
-		onSettled(queryResult.data, queryResult.error);
+		onSettledEvent(queryResult.data, queryResult.error);
 	}, [
-		onSettled,
+		onSettledEvent,
 		queryResult.data,
 		queryResult.error,
 		queryResult.status,

@@ -1,3 +1,4 @@
+import { noop, useEventCallback } from "@runes/misc";
 import {
 	type UseQueryOptions,
 	type UseQueryResult,
@@ -88,6 +89,9 @@ export function useGetList<DataType extends Data = any, ErrorType = Error>(
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { onError, onSuccess, onSettled, ...queryOptions } = options;
+	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
+	const onErrorEvent = useEventCallback(onError ?? noop);
+	const onSettledEvent = useEventCallback(onSettled ?? noop);
 
 	const result = useQuery<
 		GetListResult<DataType>,
@@ -143,20 +147,30 @@ export function useGetList<DataType extends Data = any, ErrorType = Error>(
 				);
 			});
 		}
-		onSuccess?.(result.data);
-	}, [onSuccess, queryClient, result.data, result.error, result.isFetching]);
+		onSuccessEvent(result.data);
+	}, [
+		onSuccessEvent,
+		queryClient,
+		result.data,
+		result.error,
+		result.isFetching,
+	]);
 
 	useEffect(() => {
-		if (!onError) return;
 		if (result.error == null || result.isFetching) return;
-		onError(result.error);
-	}, [onError, result.error, result.isFetching]);
+		onErrorEvent(result.error);
+	}, [onErrorEvent, result.error, result.isFetching]);
 
 	useEffect(() => {
-		if (!onSettled) return;
 		if (result.status === "pending" || result.isFetching) return;
-		onSettled(result.data, result.error);
-	}, [onSettled, result.data, result.error, result.status, result.isFetching]);
+		onSettledEvent(result.data, result.error);
+	}, [
+		onSettledEvent,
+		result.data,
+		result.error,
+		result.status,
+		result.isFetching,
+	]);
 
 	return useMemo(
 		() =>

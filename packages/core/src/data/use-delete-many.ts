@@ -1,3 +1,4 @@
+import { useEventCallback } from "@runes/misc";
 import {
 	type InfiniteData,
 	type MutateOptions,
@@ -272,27 +273,29 @@ export const useDeleteMany = <
 		},
 	);
 
-	const deleteMany = (
-		callTimeResource: string | undefined = resource,
-		callTimeParams: Partial<DeleteManyParams<DataType>> | undefined = {},
-		callTimeOptions: MutateOptions<
-			Array<DataType["id"]> | undefined,
-			MutationErrorType,
-			Partial<UseDeleteManyMutateParams<DataType>>,
-			OnMutateResult
-		> & {
-			mutationMode?: MutationMode;
-			returnPromise?: ReturnPromiseType;
-		} = {},
-	) => {
-		return mutate(
-			{
-				resource: callTimeResource,
-				...callTimeParams,
-			},
-			callTimeOptions,
-		);
-	};
+	const deleteMany = useEventCallback(
+		(
+			callTimeResource: string | undefined = resource,
+			callTimeParams: Partial<DeleteManyParams<DataType>> | undefined = {},
+			callTimeOptions: MutateOptions<
+				Array<DataType["id"]> | undefined,
+				MutationErrorType,
+				Partial<UseDeleteManyMutateParams<DataType>>,
+				OnMutateResult
+			> & {
+				mutationMode?: MutationMode;
+				returnPromise?: ReturnPromiseType;
+			} = {},
+		) => {
+			return mutate(
+				{
+					resource: callTimeResource,
+					...callTimeParams,
+				},
+				callTimeOptions,
+			);
+		},
+	);
 
 	return [deleteMany, mutationResult];
 };

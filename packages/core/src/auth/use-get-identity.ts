@@ -4,6 +4,7 @@ import {
 	useQuery,
 } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { noop, useEventCallback } from "../util";
 import type { UserIdentity } from "./types";
 import { useAuthContext } from "./use-auth-context";
 
@@ -83,23 +84,30 @@ export function useGetIdentity<ErrorType extends Error = Error>(
 		...queryOptions,
 	});
 
+	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
+	const onErrorEvent = useEventCallback(onError ?? noop);
+	const onSettledEvent = useEventCallback(onSettled ?? noop);
+
 	useEffect(() => {
-		if (!onSuccess) return;
 		if (result.data === undefined || result.isFetching) return;
-		onSuccess(result.data);
-	}, [onSuccess, result.data, result.isFetching]);
+		onSuccessEvent(result.data);
+	}, [onSuccessEvent, result.data, result.isFetching]);
 
 	useEffect(() => {
-		if (!onError) return;
 		if (result.error == null || result.isFetching) return;
-		onError(result.error);
-	}, [onError, result.error, result.isFetching]);
+		onErrorEvent(result.error);
+	}, [onErrorEvent, result.error, result.isFetching]);
 
 	useEffect(() => {
-		if (!onSettled) return;
 		if (result.status === "pending" || result.isFetching) return;
-		onSettled(result.data, result.error);
-	}, [onSettled, result.data, result.error, result.status, result.isFetching]);
+		onSettledEvent(result.data, result.error);
+	}, [
+		onSettledEvent,
+		result.data,
+		result.error,
+		result.status,
+		result.isFetching,
+	]);
 
 	return {
 		...result,

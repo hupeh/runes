@@ -19,6 +19,9 @@
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
+	"dependencies": {
+		"@runes/misc": "workspace:*"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.10",
 		"@runes/biome-config": "workspace:*",

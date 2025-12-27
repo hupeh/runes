@@ -1,3 +1,4 @@
+import { noop, useEventCallback } from "@runes/misc";
 import {
 	type UseQueryOptions,
 	type UseQueryResult,
@@ -95,6 +96,9 @@ export const useGetManyReference = <
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { onError, onSuccess, onSettled, ...queryOptions } = options;
+	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
+	const onErrorEvent = useEventCallback(onError ?? noop);
+	const onSettledEvent = useEventCallback(onSettled ?? noop);
 
 	const result = useQuery<GetManyReferenceResult<DataType>, ErrorType>({
 		queryKey: [
@@ -130,20 +134,18 @@ export const useGetManyReference = <
 			);
 		});
 
-		onSuccess?.(result.data);
-	}, [queryClient, meta, onSuccess, resource, result.data]);
+		onSuccessEvent(result.data);
+	}, [queryClient, meta, onSuccessEvent, resource, result.data]);
 
 	useEffect(() => {
-		if (!onError) return;
 		if (result.error == null) return;
-		onError(result.error);
-	}, [onError, result.error]);
+		onErrorEvent(result.error);
+	}, [onErrorEvent, result.error]);
 
 	useEffect(() => {
-		if (!onSettled) return;
 		if (result.status === "pending") return;
-		onSettled(result.data, result.error);
-	}, [onSettled, result.data, result.error, result.status]);
+		onSettledEvent(result.data, result.error);
+	}, [onSettledEvent, result.data, result.error, result.status]);
 
 	return useMemo(
 		() =>

@@ -1,3 +1,4 @@
+import { noop, useEventCallback } from "@runes/misc";
 import {
 	type UseQueryOptions,
 	type UseQueryResult,
@@ -65,6 +66,9 @@ export function useGetOne<DataType extends Data = any, ErrorType = Error>(
 ): UseGetOneHookValue<DataType, ErrorType> {
 	const dataProvider = useDataProvider();
 	const { onError, onSuccess, onSettled, enabled, ...queryOptions } = options;
+	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
+	const onErrorEvent = useEventCallback(onError ?? noop);
+	const onSettledEvent = useEventCallback(onSettled ?? noop);
 
 	const result = useQuery<DataType, ErrorType>({
 		// Sometimes the id comes as a string (e.g. when read from the URL in a Show view).
@@ -89,23 +93,26 @@ export function useGetOne<DataType extends Data = any, ErrorType = Error>(
 	});
 
 	useEffect(() => {
-		if (!onSuccess) return;
 		if (result.data === undefined || result.error != null || result.isFetching)
 			return;
-		onSuccess(result.data);
-	}, [onSuccess, result.data, result.error, result.isFetching]);
+		onSuccessEvent(result.data);
+	}, [onSuccessEvent, result.data, result.error, result.isFetching]);
 
 	useEffect(() => {
-		if (!onError) return;
 		if (result.error == null || result.isFetching) return;
-		onError(result.error);
-	}, [onError, result.error, result.isFetching]);
+		onErrorEvent(result.error);
+	}, [onErrorEvent, result.error, result.isFetching]);
 
 	useEffect(() => {
-		if (!onSettled) return;
 		if (result.status === "pending" || result.isFetching) return;
-		onSettled(result.data, result.error);
-	}, [onSettled, result.data, result.error, result.status, result.isFetching]);
+		onSettledEvent(result.data, result.error);
+	}, [
+		onSettledEvent,
+		result.data,
+		result.error,
+		result.status,
+		result.isFetching,
+	]);
 
 	return result;
 }

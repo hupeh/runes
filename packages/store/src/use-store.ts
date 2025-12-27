@@ -1,4 +1,5 @@
-import { useCallback, useSyncExternalStore } from "react";
+import { isEqual, useEventCallback } from "@runes/misc";
+import { useEffect, useState } from "react";
 import { useStoreContext } from "./use-store-context";
 
 /**
@@ -90,45 +91,37 @@ export function useStore<T = undefined>(
 
 export function useStore<T>(key: string, defaultValue?: T | undefined) {
 	const { getItem, setItem, subscribe } = useStoreContext();
-
-	// 使用 useSyncExternalStore 订阅 store
-	const subscribeToKey = useCallback(
-		(callback: () => void) => {
-			return subscribe(key, callback);
-		},
-		[key, subscribe],
+	const [value, setValue] = useState<T | undefined>(() =>
+		getItem(key, defaultValue),
 	);
 
-	// 获取快照函数
-	const getSnapshot = useCallback(() => {
-		return getItem(key, defaultValue);
-	}, [key, defaultValue, getItem]);
+	// 订阅此键的变化，当变化发生时更新状态
+	useEffect(() => {
+		const storedValue = getItem(key, defaultValue);
+		if (!isEqual(value, storedValue)) {
+			setValue(storedValue);
+		}
+		const unsubscribe = subscribe(key, (newValue) => {
+			setValue(typeof newValue === "undefined" ? defaultValue : newValue);
+		});
+		return () => unsubscribe();
+	}, [key, subscribe, defaultValue, getItem, value]);
 
-	// 订阅并获取当前值
-	const value = useSyncExternalStore(subscribeToKey, getSnapshot, getSnapshot);
-
-	// 设置值的函数
-	const set = useCallback(
-		(valueParam: T, runtimeDefaultValue?: T) => {
-			const currentValue = getItem(key, defaultValue);
-			// 支持函数式更新
-			const newValue =
-				typeof valueParam === "function"
-					? (valueParam as (prev: T | undefined) => T)(currentValue)
-					: valueParam;
-
-			// 处理 undefined 值，使用默认值
-			setItem(
-				key,
-				typeof newValue === "undefined"
-					? typeof runtimeDefaultValue === "undefined"
-						? defaultValue
-						: runtimeDefaultValue
-					: newValue,
-			);
-		},
-		[key, defaultValue, getItem, setItem],
-	);
+	const set = useEventCallback((valueParam: T, runtimeDefaultValue: T) => {
+		const newValue =
+			typeof valueParam === "function" ? valueParam(value) : valueParam;
+		// 我们只在 Store 中设置值；
+		// 本地状态中的值将在下次渲染时
+		// 通过 useEffect 更新
+		setItem(
+			key,
+			typeof newValue === "undefined"
+				? typeof runtimeDefaultValue === "undefined"
+					? defaultValue
+					: runtimeDefaultValue
+				: newValue,
+		);
+	});
 
 	return [value, set];
 }

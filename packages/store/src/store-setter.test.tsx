@@ -201,7 +201,7 @@ describe("StoreSetter", () => {
 			}
 
 			render(wrapper({ children: <TestComponent /> }));
-			expect(storeValue).toBeUndefined();
+			expect(storeValue).toBe("default");
 			cleanup();
 		});
 	});

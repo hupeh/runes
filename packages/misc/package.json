@@ -1,6 +1,7 @@
 {
-	"name": "@runes/core",
+	"name": "@runes/misc",
 	"version": "0.0.1",
+	"description": "A store package for Runes",
 	"type": "module",
 	"main": "./src/index.ts",
 	"module": "./src/index.ts",
@@ -15,39 +16,26 @@
 		"check": "biome check --write",
 		"typecheck": "tsc --noEmit"
 	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"dependencies": {
-		"@runes/i18n": "workspace:*",
-		"@runes/misc": "workspace:*",
-		"@runes/store": "workspace:*",
-		"@tanstack/react-query": "^5.90.12",
-		"inflection": "^3.0.2",
-		"lodash": "^4.17.21"
-	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.10",
 		"@runes/biome-config": "workspace:*",
 		"@runes/typescript-config": "workspace:*",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/react": "^16.1.0",
-		"@types/lodash": "^4.17.21",
 		"@types/node": "^20.0.0",
-		"@types/node-polyglot": "^2.5.0",
 		"@types/react": "^19.0.0",
 		"@vitejs/plugin-react": "^4.3.4",
 		"babel-plugin-react-compiler": "^1.0.0",
 		"jiti": "^2.4.2",
 		"jsdom": "^27.3.0",
-		"node-polyglot": "^2.6.0",
 		"react": "^19.0.2",
-		"react-router": "^7.11.0",
 		"typescript": "^5.9.3",
 		"vitest": "^4.0.16"
 	},
 	"peerDependencies": {
-		"react": "^19.0.0",
-		"react-router": "^7.11.0"
+		"react": "^19.0.0"
+	},
+	"dependencies": {
+		"react-fast-compare": "^3.2.2"
 	}
 }

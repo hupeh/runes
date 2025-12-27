@@ -1,3 +1,4 @@
+import { noop, useEventCallback } from "@runes/misc";
 import {
 	type MutateOptions,
 	type QueryKey,
@@ -60,9 +61,9 @@ export function useMutationWithMutationMode<
 		);
 	}
 
-	const mutationFnEvent = mutationFn;
-	const updateCacheEvent = updateCache;
-	const getQueryKeysEvent = getQueryKeys;
+	const mutationFnEvent = useEventCallback(mutationFn);
+	const updateCacheEvent = useEventCallback(updateCache);
+	const getQueryKeysEvent = useEventCallback(getQueryKeys);
 
 	/**
 	 * 通过 queryClient.getQueriesData() 快照先前的值
@@ -77,12 +78,19 @@ export function useMutationWithMutationMode<
 	 *
 	 * @see https://tanstack.com/query/v5/docs/react/reference/QueryClient#queryclientgetqueriesdata
 	 */
-	const getSnapshotEvent = (queryKeys: Array<QueryKey>) => {
+	const getSnapshotEvent = useEventCallback((queryKeys: Array<QueryKey>) => {
 		return queryKeys.reduce<Snapshot>(
 			(prev, queryKey) => prev.concat(queryClient.getQueriesData({ queryKey })),
 			[],
 		);
-	};
+	});
+	const onUndoEvent = useEventCallback(onUndo ?? noop);
+	const getMutateWithMiddlewaresEvent = useEventCallback(
+		getMutateWithMiddlewares ??
+			(noop as unknown as (
+				mutate: MutationFunction<DataType, VariablesType>,
+			) => (params: VariablesType) => Promise<DataType>),
+	);
 
 	const mode = useRef<MutationMode>(mutationMode);
 	useEffect(() => {
@@ -243,10 +251,8 @@ export function useMutationWithMutationMode<
 
 		// Store the mutation with middlewares to avoid losing them if the calling component is unmounted
 		if (getMutateWithMiddlewares) {
-			mutateWithMiddlewares.current = getMutateWithMiddlewares(
-				(params: VariablesType) => {
-					return mutationFnEvent(params);
-				},
+			mutateWithMiddlewares.current = getMutateWithMiddlewaresEvent(
+				(params: VariablesType) => mutationFnEvent(params),
 			);
 		} else {
 			mutateWithMiddlewares.current = mutationFnEvent;
@@ -348,7 +354,7 @@ export function useMutationWithMutationMode<
 			addUndoableMutation(({ isUndo }) => {
 				if (isUndo) {
 					if (onUndo) {
-						onUndo(
+						onUndoEvent(
 							{
 								...paramsRef.current,
 								...callTimeParams,
@@ -379,7 +385,7 @@ export function useMutationWithMutationMode<
 		[mutation],
 	);
 
-	return [mutate, mutationResult];
+	return [useEventCallback(mutate), mutationResult];
 }
 
 /**

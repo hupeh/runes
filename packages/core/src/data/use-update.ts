@@ -1,3 +1,4 @@
+import { useEventCallback } from "@runes/misc";
 import {
 	type InfiniteData,
 	type MutateOptions,
@@ -114,12 +115,11 @@ export function useUpdate<DataType extends Data = any, ErrorType = Error>(
 		...mutationOptions
 	} = options;
 
-	const dataProviderUpdate: UpdateFunction<DataType> = (
-		resource: string,
-		params: UpdateParams<DataType>,
-	) => {
-		return dataProvider.update<DataType>(resource, params);
-	};
+	const dataProviderUpdate: UpdateFunction<DataType> = useEventCallback(
+		(resource: string, params: UpdateParams<DataType>) => {
+			return dataProvider.update<DataType>(resource, params);
+		},
+	);
 
 	const [mutate, mutationResult] = useMutationWithMutationMode<
 		ErrorType,
@@ -269,27 +269,29 @@ export function useUpdate<DataType extends Data = any, ErrorType = Error>(
 		},
 	);
 
-	const update = (
-		callTimeResource: string | undefined = resource,
-		callTimeParams: Partial<UpdateParams<DataType>> = {},
-		callTimeOptions: MutateOptions<
-			DataType,
-			ErrorType,
-			Partial<UseUpdateMutateParams<DataType>>,
-			OnMutateResult
-		> & {
-			mutationMode?: MutationMode;
-			returnPromise?: boolean;
-		} = {},
-	) => {
-		return mutate(
-			{
-				resource: callTimeResource,
-				...callTimeParams,
-			},
-			callTimeOptions,
-		);
-	};
+	const update = useEventCallback(
+		(
+			callTimeResource: string | undefined = resource,
+			callTimeParams: Partial<UpdateParams<DataType>> = {},
+			callTimeOptions: MutateOptions<
+				DataType,
+				ErrorType,
+				Partial<UseUpdateMutateParams<DataType>>,
+				OnMutateResult
+			> & {
+				mutationMode?: MutationMode;
+				returnPromise?: boolean;
+			} = {},
+		) => {
+			return mutate(
+				{
+					resource: callTimeResource,
+					...callTimeParams,
+				},
+				callTimeOptions,
+			);
+		},
+	);
 
 	return [update, mutationResult];
 }

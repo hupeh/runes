@@ -1,0 +1,63 @@
+{
+	"name": "@runes/primitives",
+	"version": "0.0.1",
+	"type": "module",
+	"main": "./src/index.ts",
+	"module": "./src/index.ts",
+	"types": "./src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"test": "vitest",
+		"format": "biome format --write",
+		"lint": "biome lint --write",
+		"check": "biome check --write",
+		"typecheck": "tsc --noEmit"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@hookform/resolvers": "^5.2.2",
+		"@runes/core": "workspace:*",
+		"@runes/i18n": "workspace:*",
+		"@runes/misc": "workspace:*",
+		"@runes/store": "workspace:*",
+		"@tanstack/react-query": "^5.90.12",
+		"@tiptap/react": "^3.14.0",
+		"@types/jsonexport": "^3.0.5",
+		"date-fns": "^4.1.0",
+		"inflection": "^3.0.2",
+		"jsonexport": "^3.2.0",
+		"lodash": "^4.17.21",
+		"react-hook-form": "^7.69.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.3.10",
+		"@runes/biome-config": "workspace:*",
+		"@runes/typescript-config": "workspace:*",
+		"@testing-library/jest-dom": "^6.6.3",
+		"@testing-library/react": "^16.1.0",
+		"@testing-library/user-event": "^14.6.1",
+		"@types/lodash": "^4.17.21",
+		"@types/node": "^20.0.0",
+		"@types/react": "^19.0.0",
+		"@vitejs/plugin-react": "^4.3.4",
+		"babel-plugin-react-compiler": "^1.0.0",
+		"jiti": "^2.4.2",
+		"jsdom": "^27.3.0",
+		"react": "^19.0.2",
+		"react-dom": "^19.0.2",
+		"react-router": "^7.11.0",
+		"typescript": "^5.9.3",
+		"vitest": "^4.0.16",
+		"yup": "^1.7.1",
+		"zod": "^4.2.1"
+	},
+	"peerDependencies": {
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"react-router": "^7.11.0"
+	}
+}

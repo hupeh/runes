@@ -1,0 +1,201 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import * as React from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { CoreAdminContext } from "../../core";
+import { testDataProvider } from "../../dataProvider";
+import { useReferenceArrayFieldController } from "./use-reference-array-field-controller";
+import { Basic } from "./use-reference-array-field-controller.stories";
+
+const ReferenceArrayFieldController = (props) => {
+	const { children, ...rest } = props;
+	const controllerProps = useReferenceArrayFieldController({
+		sort: {
+			field: "id",
+			order: "ASC",
+		},
+		...rest,
+	});
+	return children(controllerProps);
+};
+
+describe("<useReferenceArrayFieldController />", () => {
+	const dataProvider = testDataProvider({
+		getMany: vi.fn().mockResolvedValue({
+			data: [
+				{ id: 1, title: "bar1" },
+				{ id: 2, title: "bar2" },
+			],
+		}),
+	});
+
+	afterEach(async () => {
+		// @ts-expect-error
+		dataProvider.getMany.mockClear();
+		// wait for the getManyAggregate batch to resolve
+		await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0)));
+	});
+
+	it("should set the isLoading prop to true when related records are not yet fetched", () => {
+		const children = vi.fn().mockReturnValue("child");
+		render(
+			<CoreAdminContext
+				dataProvider={testDataProvider({
+					getMany: () => new Promise(() => {}),
+				})}
+			>
+				<ReferenceArrayFieldController
+					resource="foo"
+					reference="bar"
+					record={{ id: 1, barIds: [1, 2] }}
+					source="barIds"
+				>
+					{children}
+				</ReferenceArrayFieldController>
+			</CoreAdminContext>,
+		);
+		expect(children).toHaveBeenCalledWith(
+			expect.objectContaining({
+				sort: { field: "id", order: "ASC" },
+				isFetching: true,
+				isLoading: true,
+				data: undefined,
+				error: null,
+			}),
+		);
+	});
+
+	it("should call dataProvider.getMAny on mount and return the result in the data prop", async () => {
+		const children = vi.fn().mockReturnValue("child");
+		render(
+			<CoreAdminContext dataProvider={dataProvider}>
+				<ReferenceArrayFieldController
+					resource="foo"
+					reference="bar"
+					record={{ id: 1, barIds: [1, 2] }}
+					source="barIds"
+				>
+					{children}
+				</ReferenceArrayFieldController>
+			</CoreAdminContext>,
+		);
+		await waitFor(() => expect(dataProvider.getMany).toHaveBeenCalledTimes(1));
+		expect(children).toHaveBeenCalledWith(
+			expect.objectContaining({
+				sort: { field: "id", order: "ASC" },
+				isFetching: false,
+				isLoading: false,
+				data: [
+					{ id: 1, title: "bar1" },
+					{ id: 2, title: "bar2" },
+				],
+				error: null,
+			}),
+		);
+	});
+
+	it("should filter string data based on the filter props", async () => {
+		const children = vi.fn().mockReturnValue("child");
+		render(
+			<CoreAdminContext dataProvider={dataProvider}>
+				<ReferenceArrayFieldController
+					resource="foo"
+					reference="bar"
+					record={{ id: 1, barIds: [1, 2] }}
+					filter={{ title: "bar1" }}
+					source="barIds"
+				>
+					{children}
+				</ReferenceArrayFieldController>
+			</CoreAdminContext>,
+		);
+		await waitFor(() => expect(dataProvider.getMany).toHaveBeenCalledTimes(1));
+		expect(children).toHaveBeenCalledWith(
+			expect.objectContaining({
+				sort: { field: "id", order: "ASC" },
+				isFetching: false,
+				isLoading: false,
+				data: [{ id: 1, title: "bar1" }],
+				error: null,
+			}),
+		);
+	});
+
+	it("should filter array data based on the filter props", async () => {
+		const children = vi.fn().mockReturnValue("child");
+		const dataProvider = testDataProvider({
+			getMany: vi.fn().mockResolvedValue({
+				data: [
+					{ id: 1, items: ["one", "two"] },
+					{ id: 2, items: ["three"] },
+					{ id: 3, items: "four" },
+					{ id: 4, items: ["five"] },
+				],
+			}),
+		});
+		render(
+			<CoreAdminContext dataProvider={dataProvider}>
+				<ReferenceArrayFieldController
+					resource="foo"
+					reference="bar"
+					record={{ id: 1, barIds: [1, 2, 3, 4] }}
+					filter={{ items: ["two", "four", "five"] }}
+					source="barIds"
+				>
+					{children}
+				</ReferenceArrayFieldController>
+			</CoreAdminContext>,
+		);
+		await waitFor(() => expect(dataProvider.getMany).toHaveBeenCalledTimes(1));
+		expect(children).toHaveBeenCalledWith(
+			expect.objectContaining({
+				sort: { field: "id", order: "ASC" },
+				isFetching: false,
+				isLoading: false,
+				data: [
+					{ id: 1, items: ["one", "two"] },
+					{ id: 3, items: "four" },
+					{ id: 4, items: ["five"] },
+				],
+				error: null,
+			}),
+		);
+	});
+
+	describe("onSelectAll", () => {
+		it("should select all records", async () => {
+			render(<Basic />);
+			await waitFor(() => {
+				expect(screen.getByTestId("selected_ids").textContent).toBe(
+					"Selected ids: []",
+				);
+			});
+			fireEvent.click(await screen.findByText("Select All"));
+			await waitFor(() => {
+				expect(screen.getByTestId("selected_ids").textContent).toBe(
+					"Selected ids: [1,2]",
+				);
+			});
+		});
+
+		it("should select all records even though some records are already selected", async () => {
+			render(<Basic />);
+			await waitFor(() => {
+				expect(screen.getByTestId("selected_ids").textContent).toBe(
+					"Selected ids: []",
+				);
+			});
+			fireEvent.click(await screen.findByTestId("checkbox-1"));
+			await waitFor(() => {
+				expect(screen.getByTestId("selected_ids").textContent).toBe(
+					"Selected ids: [1]",
+				);
+			});
+			fireEvent.click(await screen.findByText("Select All"));
+			await waitFor(() => {
+				expect(screen.getByTestId("selected_ids").textContent).toBe(
+					"Selected ids: [1,2]",
+				);
+			});
+		});
+	});
+});

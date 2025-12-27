@@ -1,4 +1,5 @@
 export * from "./basename-context-provider";
+export * from "./core-context";
 export * from "./data-context-provider";
 export * from "./resource-context-provider";
 export * from "./resource-context-provider";

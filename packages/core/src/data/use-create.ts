@@ -1,4 +1,4 @@
-import { useEventCallback } from "@runes/misc";
+import { useEvent } from "@runes/misc";
 import {
 	type MutateOptions,
 	type QueryKey,
@@ -106,7 +106,7 @@ export const useCreate = <
 		...mutationOptions
 	} = options;
 
-	const dataProviderCreate = useEventCallback(
+	const dataProviderCreate = useEvent(
 		(resource: string, params: CreateParams<DataType>) => {
 			return dataProvider.create<DataType, ResultType>(resource, params);
 		},
@@ -211,7 +211,7 @@ export const useCreate = <
 		},
 	);
 
-	const create = useEventCallback(
+	const create = useEvent(
 		(
 			callTimeResource: string | undefined = resource,
 			callTimeParams: Partial<CreateParams<DataType>> = {},
@@ -241,7 +241,7 @@ export const useCreate = <
 /**
  * useCreate mutation 的参数类型
  */
-export interface UseCreateMutateParams<DataType extends Data> {
+export interface UseCreateMutateParams<DataType extends Omit<DataType, "id">> {
 	/** 资源名称 */
 	resource?: string;
 	/** 要创建的数据（不含 id） */

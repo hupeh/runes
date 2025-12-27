@@ -1,10 +1,10 @@
+import { noop, useEvent } from "@runes/misc";
 import {
 	type QueryObserverResult,
 	type UseQueryOptions,
 	useQuery,
 } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { noop, useEventCallback } from "../util";
 import type { UserIdentity } from "./types";
 import { useAuthContext } from "./use-auth-context";
 
@@ -84,9 +84,9 @@ export function useGetIdentity<ErrorType extends Error = Error>(
 		...queryOptions,
 	});
 
-	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
-	const onErrorEvent = useEventCallback(onError ?? noop);
-	const onSettledEvent = useEventCallback(onSettled ?? noop);
+	const onSuccessEvent = useEvent(onSuccess ?? noop);
+	const onErrorEvent = useEvent(onError ?? noop);
+	const onSettledEvent = useEvent(onSettled ?? noop);
 
 	useEffect(() => {
 		if (result.data === undefined || result.isFetching) return;

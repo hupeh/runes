@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import type { FieldPath } from "react-hook-form";
 
 /** 标识符类型，可以是字符串或数字 */
 export type Identifier = string | number;
@@ -47,3 +48,44 @@ export type SignalContext<T = any> = T & {
 	/** 可选的中止信号，用于取消异步操作 */
 	signal?: AbortSignal;
 };
+
+/**
+ * 任意字符串类型
+ * 使用交叉类型 `string & {}` 来创建一个与 `string` 行为相同的类型，
+ * 但在 TypeScript 类型系统中被视为不同的类型，用于联合类型中优先显示字面量类型
+ */
+export type AnyString = string & {};
+
+/**
+ * 接受已知值或任意其他字符串的字符串类型
+ * 适用于在不阻止自定义值的情况下提供 IDE 自动补全
+ */
+export type HintedString<KnownValues extends string> = AnyString | KnownValues;
+
+/**
+ * @todo rename to DataValues
+ */
+export type RecordValues = Record<string, any>;
+
+/**
+ * 从 react-hook-form 重新导出的 FieldPath 实现，返回对象的所有可能路径
+ * 这允许我们包含 react-hook-form 的 FieldPath 实现或在需要时替换为我们自己的实现
+ *
+ * @example
+ * type Post = { title: string; author: { name: string; }; tags: { id: string; name: string} };
+ * // 有效路径为 "title" | "author" | "author.name" | "tags.id" | "tags.name"
+ *
+ * @todo rename to DataPath
+ */
+export type RecordPath<TRecordValues extends RecordValues> =
+	FieldPath<TRecordValues>;
+
+/**
+ * 如果提供了类型则返回该类型所有可能路径的联合类型，否则返回字符串
+ * 适用于 react-admin 组件中的 "source" 等属性
+ *
+ * @todo rename to ExtractDataPaths
+ */
+export type ExtractRecordPaths<T extends RecordValues> =
+	// 用于检查是否提供了 T 的技巧
+	[T] extends [never] ? string : RecordPath<T>;

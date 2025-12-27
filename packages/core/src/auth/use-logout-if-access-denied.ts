@@ -1,6 +1,6 @@
+import { getErrorMessage } from "@runes/misc";
 import { useNavigate } from "react-router";
 import { useNotify } from "../notification";
-import { getErrorMessage } from "../util";
 import { useAuthContext } from "./use-auth-context";
 import { useLogout } from "./use-logout";
 

@@ -1,3 +1,4 @@
+import { getErrorMessage, noop, useEvent } from "@runes/misc";
 import {
 	type QueryObserverResult,
 	type UseQueryOptions,
@@ -5,7 +6,6 @@ import {
 } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useNotify } from "../notification";
-import { getErrorMessage, noop, useEventCallback } from "../util";
 import { useAuthContext } from "./use-auth-context";
 import { useLogout } from "./use-logout";
 
@@ -98,9 +98,9 @@ export function useAuthState<ErrorType = Error>(
 		...options,
 	});
 
-	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
-	const onSettledEvent = useEventCallback(onSettled ?? noop);
-	const onErrorEvent = useEventCallback(
+	const onSuccessEvent = useEvent(onSuccess ?? noop);
+	const onSettledEvent = useEvent(onSettled ?? noop);
+	const onErrorEvent = useEvent(
 		onError ??
 			((error: any) => {
 				if (!logoutOnFailure) return;

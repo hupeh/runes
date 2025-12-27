@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { memo, useEffect, useState } from "react";
 import { describe, expect, it } from "vitest";
-import { useEventCallback } from "./use-event-callback";
+import { useEvent } from "./use-event";
 
-describe("useEventCallback", () => {
+describe("useEvent", () => {
 	const Parent = () => {
 		const [value, setValue] = useState(0);
-		const handler = useEventCallback(() => {
+		const handler = useEvent(() => {
 			return 1;
 		});
 

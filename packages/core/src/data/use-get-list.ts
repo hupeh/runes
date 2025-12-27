@@ -1,4 +1,4 @@
-import { noop, useEventCallback } from "@runes/misc";
+import { noop, useEvent } from "@runes/misc";
 import {
 	type UseQueryOptions,
 	type UseQueryResult,
@@ -89,9 +89,9 @@ export function useGetList<DataType extends Data = any, ErrorType = Error>(
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { onError, onSuccess, onSettled, ...queryOptions } = options;
-	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
-	const onErrorEvent = useEventCallback(onError ?? noop);
-	const onSettledEvent = useEventCallback(onSettled ?? noop);
+	const onSuccessEvent = useEvent(onSuccess ?? noop);
+	const onErrorEvent = useEvent(onError ?? noop);
+	const onSettledEvent = useEvent(onSettled ?? noop);
 
 	const result = useQuery<
 		GetListResult<DataType>,

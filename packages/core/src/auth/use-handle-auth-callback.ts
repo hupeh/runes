@@ -1,8 +1,8 @@
+import { noop, useEvent } from "@runes/misc";
 import { type UseQueryOptions, useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { useRedirect } from "../core";
-import { noop, useEventCallback } from "../util";
 import type { AuthRedirectResult } from "./types";
 import { useAuthContext } from "./use-auth-context";
 
@@ -84,7 +84,7 @@ export function useHandleAuthCallback(options?: UseHandleAuthCallbackOptions) {
 		...queryOptions,
 	});
 
-	const onSuccessEvent = useEventCallback(
+	const onSuccessEvent = useEvent(
 		onSuccess ??
 			((data: any) => {
 				// AuthProviders relying on a third party services redirect back to the app can't
@@ -106,8 +106,8 @@ export function useHandleAuthCallback(options?: UseHandleAuthCallbackOptions) {
 				redirect(redirectTo ?? defaultRedirectUrl);
 			}),
 	);
-	const onErrorEvent = useEventCallback(onError ?? noop);
-	const onSettledEvent = useEventCallback(onSettled ?? noop);
+	const onErrorEvent = useEvent(onError ?? noop);
+	const onSettledEvent = useEvent(onSettled ?? noop);
 
 	// 处理错误
 	useEffect(() => {

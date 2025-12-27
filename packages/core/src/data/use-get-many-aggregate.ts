@@ -1,4 +1,4 @@
-import { noop, useEventCallback } from "@runes/misc";
+import { noop, useEvent } from "@runes/misc";
 import {
 	type QueryClient,
 	type UseQueryOptions,
@@ -86,9 +86,9 @@ export const useGetManyAggregate = <
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { onError, onSuccess, onSettled, enabled, ...queryOptions } = options;
-	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
-	const onErrorEvent = useEventCallback(onError ?? noop);
-	const onSettledEvent = useEventCallback(onSettled ?? noop);
+	const onSuccessEvent = useEvent(onSuccess ?? noop);
+	const onErrorEvent = useEvent(onError ?? noop);
+	const onSettledEvent = useEvent(onSettled ?? noop);
 
 	const { ids, meta } = params;
 	const placeholderData = useMemo(() => {

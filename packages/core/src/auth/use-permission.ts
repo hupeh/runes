@@ -1,10 +1,10 @@
+import { noop, useEvent } from "@runes/misc";
 import {
 	type QueryObserverResult,
 	type UseQueryOptions,
 	useQuery,
 } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { noop, useEventCallback } from "../util";
 import { useAuthContext } from "./use-auth-context";
 import { useLogoutIfAccessDenied } from "./use-logout-if-access-denied";
 
@@ -86,9 +86,9 @@ export function usePermissions<PermissionsType = any, ErrorType = Error>(
 		...queryOptions,
 	});
 
-	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
-	const onSettledEvent = useEventCallback(onSettled ?? noop);
-	const onErrorEvent = useEventCallback(
+	const onSuccessEvent = useEvent(onSuccess ?? noop);
+	const onSettledEvent = useEvent(onSettled ?? noop);
+	const onErrorEvent = useEvent(
 		onError ??
 			((error: ErrorType) => {
 				if (process.env.NODE_ENV === "development") {

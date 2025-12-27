@@ -124,7 +124,7 @@ export interface CoreContextProps {
 	/**
 	 * 资源定义列表
 	 */
-	resourceDefinitions: ResourceDefinition[];
+	resourceDefinitions?: ResourceDefinition[];
 }
 
 /**

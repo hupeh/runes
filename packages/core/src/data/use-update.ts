@@ -1,4 +1,4 @@
-import { useEventCallback } from "@runes/misc";
+import { useEvent } from "@runes/misc";
 import {
 	type InfiniteData,
 	type MutateOptions,
@@ -115,7 +115,7 @@ export function useUpdate<DataType extends Data = any, ErrorType = Error>(
 		...mutationOptions
 	} = options;
 
-	const dataProviderUpdate: UpdateFunction<DataType> = useEventCallback(
+	const dataProviderUpdate: UpdateFunction<DataType> = useEvent(
 		(resource: string, params: UpdateParams<DataType>) => {
 			return dataProvider.update<DataType>(resource, params);
 		},
@@ -269,7 +269,7 @@ export function useUpdate<DataType extends Data = any, ErrorType = Error>(
 		},
 	);
 
-	const update = useEventCallback(
+	const update = useEvent(
 		(
 			callTimeResource: string | undefined = resource,
 			callTimeParams: Partial<UpdateParams<DataType>> = {},

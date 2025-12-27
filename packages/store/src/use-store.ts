@@ -1,4 +1,4 @@
-import { isEqual, useEventCallback } from "@runes/misc";
+import { isEqual, useEvent } from "@runes/misc";
 import { useEffect, useState } from "react";
 import { useStoreContext } from "./use-store-context";
 
@@ -107,7 +107,7 @@ export function useStore<T>(key: string, defaultValue?: T | undefined) {
 		return () => unsubscribe();
 	}, [key, subscribe, defaultValue, getItem, value]);
 
-	const set = useEventCallback((valueParam: T, runtimeDefaultValue: T) => {
+	const set = useEvent((valueParam: T, runtimeDefaultValue: T) => {
 		const newValue =
 			typeof valueParam === "function" ? valueParam(value) : valueParam;
 		// 我们只在 Store 中设置值；

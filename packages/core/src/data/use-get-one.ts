@@ -1,4 +1,4 @@
-import { noop, useEventCallback } from "@runes/misc";
+import { noop, useEvent } from "@runes/misc";
 import {
 	type UseQueryOptions,
 	type UseQueryResult,
@@ -66,9 +66,9 @@ export function useGetOne<DataType extends Data = any, ErrorType = Error>(
 ): UseGetOneHookValue<DataType, ErrorType> {
 	const dataProvider = useDataProvider();
 	const { onError, onSuccess, onSettled, enabled, ...queryOptions } = options;
-	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
-	const onErrorEvent = useEventCallback(onError ?? noop);
-	const onSettledEvent = useEventCallback(onSettled ?? noop);
+	const onSuccessEvent = useEvent(onSuccess ?? noop);
+	const onErrorEvent = useEvent(onError ?? noop);
+	const onSettledEvent = useEvent(onSettled ?? noop);
 
 	const result = useQuery<DataType, ErrorType>({
 		// Sometimes the id comes as a string (e.g. when read from the URL in a Show view).

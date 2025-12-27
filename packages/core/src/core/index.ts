@@ -1,9 +1,11 @@
 export * from "./basename-context-provider";
 export * from "./core-context";
 export * from "./data-context-provider";
+export * from "./is-offline";
 export * from "./resource-context-provider";
 export * from "./resource-context-provider";
 export * from "./resource-definition-context-provider";
+export type { SourceContextValue } from "./source-context";
 export * from "./source-context-provider";
 export * from "./use-basename";
 export * from "./use-data-context";
@@ -17,3 +19,4 @@ export * from "./use-resource-definition-context";
 export * from "./use-resource-definitions";
 export * from "./use-source-context";
 export * from "./use-wrapped-source";
+export * from "./with-data";

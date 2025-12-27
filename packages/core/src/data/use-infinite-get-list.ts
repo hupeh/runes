@@ -1,4 +1,4 @@
-import { noop, useEventCallback } from "@runes/misc";
+import { noop, useEvent } from "@runes/misc";
 import {
 	type InfiniteData,
 	type QueryKey,
@@ -113,9 +113,9 @@ export function useInfiniteGetList<
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { onSuccess, onError, onSettled, ...queryOptions } = options;
-	const onSuccessEvent = useEventCallback(onSuccess ?? noop);
-	const onErrorEvent = useEventCallback(onError ?? noop);
-	const onSettledEvent = useEventCallback(onSettled ?? noop);
+	const onSuccessEvent = useEvent(onSuccess ?? noop);
+	const onErrorEvent = useEvent(onError ?? noop);
+	const onSettledEvent = useEvent(onSettled ?? noop);
 
 	const result = useInfiniteQuery<
 		GetInfiniteListResult<DataType>,

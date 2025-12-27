@@ -1,43 +1,7 @@
 import { render } from "@testing-library/react";
-import lodashGet from "lodash/get.js";
 import { describe, expect, it } from "vitest";
-import { I18nContextProvider } from "./i18n-context-provider";
+import { TestTranslationProvider } from "./test-translation-provider";
 import { Translate } from "./translate";
-import type { I18nProvider, TranslationMessages } from "./types";
-
-const testI18nProvider = ({
-	translate,
-	messages,
-}: {
-	translate?: I18nProvider["translate"];
-	messages?: TranslationMessages;
-} = {}): I18nProvider => {
-	return {
-		translate: messages
-			? (key, options) => {
-					const message = lodashGet(messages, key);
-					return message
-						? typeof message === "function"
-							? message(options)
-							: message
-						: options?._;
-				}
-			: translate || ((key) => key),
-		changeLocale: () => Promise.resolve(),
-		getLocale: () => "en",
-	};
-};
-
-const TestTranslationProvider = ({ translate, messages, children }: any) => {
-	return (
-		<I18nContextProvider
-			value={testI18nProvider({ translate, messages })}
-			locale="en"
-		>
-			{children}
-		</I18nContextProvider>
-	);
-};
 
 const Basic = () => (
 	<TestTranslationProvider

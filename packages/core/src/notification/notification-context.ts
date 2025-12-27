@@ -1,5 +1,5 @@
+import { noop } from "@runes/misc";
 import { createContext, type Dispatch, type SetStateAction } from "react";
-import { noop } from "../util";
 import type { NotificationPayload } from "./types";
 
 /**

@@ -1,4 +1,4 @@
-import { noop, useEventCallback } from "@runes/misc";
+import { noop, useEvent } from "@runes/misc";
 import {
 	type MutateOptions,
 	type QueryKey,
@@ -61,9 +61,9 @@ export function useMutationWithMutationMode<
 		);
 	}
 
-	const mutationFnEvent = useEventCallback(mutationFn);
-	const updateCacheEvent = useEventCallback(updateCache);
-	const getQueryKeysEvent = useEventCallback(getQueryKeys);
+	const mutationFnEvent = useEvent(mutationFn);
+	const updateCacheEvent = useEvent(updateCache);
+	const getQueryKeysEvent = useEvent(getQueryKeys);
 
 	/**
 	 * 通过 queryClient.getQueriesData() 快照先前的值
@@ -78,14 +78,14 @@ export function useMutationWithMutationMode<
 	 *
 	 * @see https://tanstack.com/query/v5/docs/react/reference/QueryClient#queryclientgetqueriesdata
 	 */
-	const getSnapshotEvent = useEventCallback((queryKeys: Array<QueryKey>) => {
+	const getSnapshotEvent = useEvent((queryKeys: Array<QueryKey>) => {
 		return queryKeys.reduce<Snapshot>(
 			(prev, queryKey) => prev.concat(queryClient.getQueriesData({ queryKey })),
 			[],
 		);
 	});
-	const onUndoEvent = useEventCallback(onUndo ?? noop);
-	const getMutateWithMiddlewaresEvent = useEventCallback(
+	const onUndoEvent = useEvent(onUndo ?? noop);
+	const getMutateWithMiddlewaresEvent = useEvent(
 		getMutateWithMiddlewares ??
 			(noop as unknown as (
 				mutate: MutationFunction<DataType, VariablesType>,
@@ -385,7 +385,7 @@ export function useMutationWithMutationMode<
 		[mutation],
 	);
 
-	return [useEventCallback(mutate), mutationResult];
+	return [useEvent(mutate), mutationResult];
 }
 
 /**

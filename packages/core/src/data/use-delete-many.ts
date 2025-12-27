@@ -1,4 +1,4 @@
-import { useEventCallback } from "@runes/misc";
+import { useEvent } from "@runes/misc";
 import {
 	type InfiniteData,
 	type MutateOptions,
@@ -273,7 +273,7 @@ export const useDeleteMany = <
 		},
 	);
 
-	const deleteMany = useEventCallback(
+	const deleteMany = useEvent(
 		(
 			callTimeResource: string | undefined = resource,
 			callTimeParams: Partial<DeleteManyParams<DataType>> | undefined = {},

@@ -1,10 +1,40 @@
-import { TestTranslationProvider } from "@runes/i18n";
-import type React from "react";
+import type { I18nProvider, TranslationMessages } from "@runes/i18n";
+import lodashGet from "lodash/get.js";
 import { SourceContextProvider } from "../core";
+import { I18nContextProvider } from "./i18n-context-provider";
 import { useTranslateLabel } from "./use-translate-label";
 
 export default {
 	title: "runes/core/i18n/useTranslateLabel",
+};
+
+const TestTranslationProvider = ({ translate, messages, children }: any) => (
+	<I18nContextProvider value={testI18nProvider({ translate, messages })}>
+		{children}
+	</I18nContextProvider>
+);
+
+const testI18nProvider = ({
+	translate,
+	messages,
+}: {
+	translate?: I18nProvider["translate"];
+	messages?: TranslationMessages;
+} = {}): I18nProvider => {
+	return {
+		translate: messages
+			? (key, options) => {
+					const message = lodashGet(messages, key);
+					return message
+						? typeof message === "function"
+							? message(options)
+							: message
+						: options?._;
+				}
+			: translate || ((key) => key),
+		changeLocale: () => Promise.resolve(),
+		getLocale: () => "en",
+	};
 };
 
 const TranslateLabel = ({

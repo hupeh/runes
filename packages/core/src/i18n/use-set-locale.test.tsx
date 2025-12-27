@@ -1,8 +1,5 @@
-import {
-	createMemoryStore,
-	StoreContextProvider,
-	useStore,
-} from "@runes/store";
+import { type I18nProvider, type Locale, useTranslate } from "@runes/i18n";
+import { createMemoryStore, StoreContextProvider } from "@runes/store";
 import {
 	act,
 	fireEvent,
@@ -11,34 +8,9 @@ import {
 	waitFor,
 } from "@testing-library/react";
 import Polyglot from "node-polyglot";
-import type * as React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { I18nContextProvider } from "./i18n-context-provider";
-import type { I18nProvider, Locale } from "./types";
 import { useSetLocale } from "./use-set-locale";
-import { useTranslate } from "./use-translate";
-
-// 测试用的包装器，连接 store 和 I18nContextProvider
-const I18nContextProviderWithStore = ({
-	value,
-	onLocaleError,
-	children,
-}: {
-	value: I18nProvider;
-	onLocaleError?: (error: any) => void;
-	children: React.ReactNode;
-}) => {
-	const [locale] = useStore<string>("locale");
-	return (
-		<I18nContextProvider
-			value={value}
-			locale={locale}
-			onLocaleError={onLocaleError}
-		>
-			{children}
-		</I18nContextProvider>
-	);
-};
 
 /**
  * 基于返回给定语言环境消息的函数构建基于 polyglot 的 i18nProvider
@@ -143,9 +115,9 @@ describe("useSetLocale", () => {
 		});
 		render(
 			<StoreContextProvider value={createMemoryStore()}>
-				<I18nContextProviderWithStore value={i18nProvider}>
+				<I18nContextProvider value={i18nProvider}>
 					<Component />
-				</I18nContextProviderWithStore>
+				</I18nContextProvider>
 			</StoreContextProvider>,
 		);
 		expect(screen.queryAllByText("hello")).toHaveLength(1);

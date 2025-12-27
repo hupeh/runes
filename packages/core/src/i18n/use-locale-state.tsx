@@ -1,6 +1,6 @@
+import { useI18nProvider } from "@runes/i18n";
 import { useStore } from "@runes/store";
 import { useMemo } from "react";
-import { useI18nProvider } from "./use-i18n-provider";
 
 /**
  * 获取当前语言环境及修改它的能力

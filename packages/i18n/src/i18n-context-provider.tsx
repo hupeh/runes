@@ -1,4 +1,3 @@
-import { useStore } from "@runes/store";
 import { type ReactNode, useEffect, useState } from "react";
 import { I18nContext } from "./i18n-context";
 import type { I18nProvider } from "./types";
@@ -6,6 +5,7 @@ import type { I18nProvider } from "./types";
 export interface I18nContextProviderProps {
 	/** i18n 提供者实例 */
 	value?: I18nProvider;
+	locale?: string;
 	/** 语言环境切换错误时的回调 */
 	onLocaleError?: (error: any) => void;
 	children: ReactNode;
@@ -22,10 +22,10 @@ const defaulti18nContext = {
  */
 export const I18nContextProvider = ({
 	value = defaulti18nContext,
+	locale = "en",
 	onLocaleError,
 	children,
 }: I18nContextProviderProps) => {
-	const [locale] = useStore("locale");
 	const [key, setKey] = useState(0);
 	// 避免闪烁效果，如果用户有非默认语言环境，则延迟首次渲染
 	const [isInitialized, setInitialized] = useState(

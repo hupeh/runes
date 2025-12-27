@@ -325,7 +325,7 @@ export type UseUpdateOptions<DataType extends Data, ErrorType = Error> = Omit<
 		DataType,
 		ErrorType,
 		Partial<UseUpdateMutateParams<DataType>>,
-		OnMutateResult
+		OnMutateResult | undefined
 	>,
 	"mutationFn"
 > & {
@@ -357,7 +357,7 @@ export type UpdateMutationFunction<
 		DataType,
 		ErrorType,
 		Partial<UseUpdateMutateParams<DataType>>,
-		OnMutateResult
+		OnMutateResult | undefined
 	> & {
 		mutationMode?: MutationMode;
 		returnPromise?: ReturnPromiseType;
@@ -379,6 +379,6 @@ export type UseUpdateResult<
 		RecordType,
 		ErrorType,
 		Partial<UpdateParams<RecordType> & { resource?: string }>,
-		OnMutateResult
+		OnMutateResult | undefined
 	> & { isLoading: boolean },
 ];

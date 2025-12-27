@@ -7,7 +7,7 @@ import {
 	useCanAccess,
 } from "./use-can-access";
 
-export type UseRequireAccessOptions<ErrorType extends Error = Error> =
+export type UseRequireAccessOptions<ErrorType = Error> =
 	UseCanAccessOptions<ErrorType>;
 
 export type UseRequireAccessResult<ErrorType extends Error = Error> = Omit<
@@ -55,7 +55,7 @@ export type UseRequireAccessResult<ErrorType extends Error = Error> = Omit<
  * };
  * ```
  */
-export function useRequireAccess<ErrorType extends Error = Error>(
+export function useRequireAccess<ErrorType = Error>(
 	params: UseRequireAccessOptions<ErrorType>,
 ) {
 	const { canAccess, data: _, error, ...rest } = useCanAccess(params);

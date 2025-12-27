@@ -1,9 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import * as React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { CoreAdminContext } from "../../core";
-import { testDataProvider } from "../../dataProvider/testDataProvider";
-import { memoryStore } from "../../store";
 import { useReferenceManyFieldController } from "./use-reference-many-field-controller";
 import {
 	Basic,

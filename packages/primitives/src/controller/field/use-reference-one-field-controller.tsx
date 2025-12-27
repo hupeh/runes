@@ -1,9 +1,5 @@
 import type { UseQueryOptions } from "@tanstack/react-query";
 import get from "lodash/get.js";
-import { useGetManyReference } from "../../dataProvider";
-import { useNotify } from "../../notification";
-import type { RaRecord, SortPayload } from "../../types";
-import { useRecordContext } from "../record";
 import type { UseReferenceResult } from "../use-reference";
 
 export interface UseReferenceOneFieldControllerParams<

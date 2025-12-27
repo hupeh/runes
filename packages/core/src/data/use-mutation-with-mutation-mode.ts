@@ -139,7 +139,7 @@ export function useMutationWithMutationMode<
 		DataType["data"],
 		ErrorType,
 		Partial<VariablesType>,
-		OnMutateResult
+		OnMutateResult | undefined
 	>({
 		mutationKey,
 		mutationFn: async (params) => {
@@ -317,9 +317,7 @@ export function useMutationWithMutationMode<
 				onSuccess(
 					optimisticResult,
 					{ ...paramsRef.current, ...callTimeParams },
-					{
-						snapshot: snapshot.current,
-					},
+					{ snapshot: snapshot.current },
 					{
 						client: queryClient,
 						mutationKey,
@@ -330,9 +328,7 @@ export function useMutationWithMutationMode<
 				mutationOptions.onSuccess(
 					optimisticResult,
 					{ ...paramsRef.current, ...callTimeParams },
-					{
-						snapshot: snapshot.current,
-					},
+					{ snapshot: snapshot.current },
 					{
 						client: queryClient,
 						mutationKey,
@@ -422,7 +418,7 @@ export type UseMutationWithMutationModeOptions<
 		DataType["data"],
 		ErrorType,
 		Partial<VariablesType>,
-		OnMutateResult
+		OnMutateResult | undefined
 	>,
 	"mutationFn"
 > & {
@@ -502,7 +498,7 @@ export type UseMutationWithMutationModeResult<
 		DataType["data"],
 		ErrorType,
 		Partial<VariablesType>,
-		OnMutateResult
+		OnMutateResult | undefined
 	> & {
 		isLoading: boolean;
 	},

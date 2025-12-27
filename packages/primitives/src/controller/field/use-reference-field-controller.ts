@@ -1,8 +1,6 @@
 import type { UseQueryOptions } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { type LinkToType, useGetPathForRecord } from "../../routing";
-import type { RaRecord } from "../../types";
-import { useFieldValue } from "../../util";
 import { type UseReferenceResult, useReference } from "../use-reference";
 
 export const useReferenceFieldController = <

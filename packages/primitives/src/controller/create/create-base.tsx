@@ -42,8 +42,8 @@ import {
  * );
  */
 export const CreateBase = <
-	RecordType extends Omit<Data, "id"> = any,
-	ResultRecordType extends Data = RecordType & { id: Identifier },
+	RecordType extends Data = any,
+	ResultRecordType extends RecordType = RecordType,
 	MutationOptionsError = Error,
 >({
 	children,
@@ -90,8 +90,8 @@ export const CreateBase = <
 };
 
 export interface CreateBaseProps<
-	RecordType extends Omit<Data, "id"> = any,
-	ResultRecordType extends Data = RecordType & { id: Identifier },
+	RecordType extends Data = any,
+	ResultRecordType extends RecordType = RecordType,
 	MutationOptionsError = Error,
 > extends CreateControllerProps<
 		RecordType,

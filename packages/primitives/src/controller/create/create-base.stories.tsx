@@ -7,9 +7,8 @@ import {
 	testDataProvider,
 	useLocaleState,
 } from "@runes/core";
-import polyglotI18nProvider from "ra-i18n-polyglot";
-import englishMessages from "ra-language-english";
-import frenchMessages from "ra-language-french";
+import polyglotI18nProvider from "@runes/i18n-polyglot";
+import { englishMessages, frenchMessages } from "@runes/languages";
 import { type SaveHandlerCallbacks, useSaveContext } from "../save-context";
 import { CreateBase, type CreateBaseProps } from "./create-base";
 import { useCreateContext } from "./use-create-context";
@@ -19,7 +18,7 @@ export default {
 };
 
 const defaultI18nProvider = polyglotI18nProvider(
-	(locale) =>
+	(locale: string) =>
 		locale === "fr"
 			? mergeTranslations(frenchMessages, {
 					resources: {
@@ -33,7 +32,7 @@ const defaultI18nProvider = polyglotI18nProvider(
 );
 
 const customI18nProvider = polyglotI18nProvider(
-	(locale) =>
+	(locale: string) =>
 		locale === "fr"
 			? mergeTranslations(frenchMessages, {
 					resources: {

@@ -1,8 +1,5 @@
 import type { UseQueryOptions } from "@tanstack/react-query";
 import get from "lodash/get.js";
-import { useGetManyAggregate } from "../../dataProvider";
-import { useNotify } from "../../notification";
-import type { RaRecord, SortPayload } from "../../types";
 import { type ListControllerResult, useList } from "../list";
 
 export interface UseReferenceArrayFieldControllerParams<

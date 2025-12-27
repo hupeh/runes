@@ -329,7 +329,7 @@ export type UseUpdateManyOptions<
 		Array<DataType["id"]> | undefined,
 		MutationErrorType,
 		Partial<UseUpdateManyMutateParams<DataType>>,
-		OnMutateResult
+		OnMutateResult | undefined
 	>,
 	"mutationFn"
 > & {
@@ -364,7 +364,7 @@ export type UseUpdateManyResult<
 			DataType["id"][],
 			MutationErrorType,
 			Partial<UseUpdateManyMutateParams<DataType>>,
-			OnMutateResult
+			OnMutateResult | undefined
 		> & {
 			mutationMode?: MutationMode;
 			returnPromise?: ReturnPromiseType;
@@ -374,6 +374,6 @@ export type UseUpdateManyResult<
 		DataType["id"][] | undefined,
 		MutationErrorType,
 		Partial<UpdateManyParams<DataType> & { resource?: string }>,
-		OnMutateResult
+		OnMutateResult | undefined
 	> & { isLoading: boolean },
 ];

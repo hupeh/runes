@@ -5,7 +5,6 @@ import {
 } from "@runes/core";
 import type { UseQueryOptions } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { useFieldValue } from "../../util";
 import { ReferenceFieldContextProvider } from "./reference-field-context";
 import {
 	type UseReferenceFieldControllerResult,

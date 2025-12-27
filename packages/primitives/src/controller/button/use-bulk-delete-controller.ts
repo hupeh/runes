@@ -8,7 +8,8 @@ import {
 	useResourceContext,
 	useTranslate,
 } from "@runes/core";
-import { useCallback, useMemo } from "react";
+import { useEvent } from "@runes/misc";
+import { useMemo } from "react";
 import { useListContext } from "../list/use-list-context";
 
 export const useBulkDeleteController = <
@@ -66,7 +67,7 @@ export const useBulkDeleteController = <
 		},
 	);
 
-	const handleDelete = useCallback(() => {
+	const handleDelete = useEvent(() => {
 		deleteMany(
 			resource,
 			{
@@ -78,14 +79,7 @@ export const useBulkDeleteController = <
 				...otherMutationOptions,
 			},
 		);
-	}, [
-		deleteMany,
-		mutationMeta,
-		mutationMode,
-		otherMutationOptions,
-		resource,
-		selectedIds,
-	]);
+	});
 
 	return useMemo(
 		() => ({

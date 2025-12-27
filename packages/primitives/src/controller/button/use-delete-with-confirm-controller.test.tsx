@@ -1,5 +1,6 @@
 import {
 	CoreContext,
+	type NotificationPayload,
 	testDataProvider,
 	useNotificationContext,
 } from "@runes/core";
@@ -8,15 +9,16 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import useDeleteWithConfirmController, {
+import {
 	type UseDeleteWithConfirmControllerParams,
+	useDeleteWithConfirmController,
 } from "./use-delete-with-confirm-controller";
 
 describe("useDeleteWithConfirmController", () => {
 	it("should call the dataProvider.delete() function with the meta param", async () => {
-		let receivedMeta = null;
+		let receivedMeta: any = null;
 		const dataProvider = testDataProvider({
-			delete: vi.fn((ressource, params) => {
+			delete: vi.fn((_resource, params) => {
 				receivedMeta = params?.meta?.key;
 				return Promise.resolve({ data: params?.meta?.key });
 			}),
@@ -70,7 +72,7 @@ describe("useDeleteWithConfirmController", () => {
 			);
 		};
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -108,7 +110,7 @@ describe("useDeleteWithConfirmController", () => {
 
 	it("should unselect records from all storeKeys in useRecordSelection", async () => {
 		const dataProvider = testDataProvider({
-			delete: vi.fn((resource, params) => {
+			delete: vi.fn((_resource, params) => {
 				return Promise.resolve({ data: params.previousData });
 			}),
 		});
@@ -119,7 +121,11 @@ describe("useDeleteWithConfirmController", () => {
 				resource: "posts",
 				mutationMode: "pessimistic",
 			} as UseDeleteWithConfirmControllerParams);
-			return <button onClick={handleDelete}>Delete</button>;
+			return (
+				<button type="button" onClick={handleDelete}>
+					Delete
+				</button>
+			);
 		};
 
 		const store = createMemoryStore();
@@ -148,9 +154,7 @@ describe("useDeleteWithConfirmController", () => {
 				expect(store.getItem("posts.selectedIds")).toEqual([123]);
 				expect(store.getItem("bar.selectedIds")).toEqual([]);
 			},
-			{
-				timeout: 1000,
-			},
+			{ timeout: 1000 },
 		);
 	});
 });

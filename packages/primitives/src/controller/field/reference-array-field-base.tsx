@@ -1,10 +1,6 @@
 import type { UseQueryOptions } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import * as React from "react";
-import { ResourceContextProvider } from "../../core";
-import type { FilterPayload, RaRecord, SortPayload } from "../../types";
 import { ListContextProvider, type ListControllerResult } from "../list";
-import { useRecordContext } from "../record";
 import type { BaseFieldProps } from "./types";
 import { useReferenceArrayFieldController } from "./use-reference-array-field-controller";
 

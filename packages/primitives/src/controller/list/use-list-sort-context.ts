@@ -1,6 +1,9 @@
 import { useContext } from "react";
 
-import { ListSortContext, type ListSortContextValue } from "./list-sort-context";
+import {
+	ListSortContext,
+	type ListSortContextValue,
+} from "./list-sort-context";
 
 /**
  * Hook to read the list sort controller props from the ListSortContext.

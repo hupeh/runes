@@ -1,7 +1,7 @@
 import type { FunctionComponent } from "react";
 import { describe, expect, it } from "vitest";
-import InferredElement from "./inferred-element";
 import inferElementFromValues from "./infer-element-from-values";
+import InferredElement from "./inferred-element";
 
 interface Props {
 	source: string;

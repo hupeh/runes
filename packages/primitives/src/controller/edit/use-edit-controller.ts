@@ -135,7 +135,7 @@ export const useEditController = <
 				notify("ra.notification.item_doesnt_exist", {
 					type: "error",
 				});
-				redirect(redirectOnError, resource, id);
+				redirect(redirectOnError, { params: [resource, id] });
 			},
 			refetchOnReconnect: false,
 			refetchOnWindowFocus: false,
@@ -144,7 +144,7 @@ export const useEditController = <
 		},
 	);
 
-	// eslint-disable-next-line eqeqeq
+	// biome-ignore lint/suspicious/noDoubleEquals: 允许字符串与数字比较
 	if (record?.id && record.id != id) {
 		throw new Error(
 			`useEditController: Fetched record's id attribute (${record.id}) must match the requested 'id' (${id})`,
@@ -188,7 +188,7 @@ export const useEditController = <
 					},
 					undoable: mutationMode === "undoable",
 				});
-				redirect(redirectTo, resource, data.id, data);
+				redirect(redirectTo, { params: [resource, data.id, data] });
 			},
 			onError: (...args) => {
 				if (onError) {

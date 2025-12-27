@@ -105,7 +105,7 @@ export type AuthProvider = {
 	 * @param params 登出参数
 	 * @returns 返回重定向 URL，false 表示不重定向
 	 */
-	logout?: (params?: QueryContext) => Promise<undefined | false | string>;
+	logout?: (params?: QueryContext) => Promise<false | string | void>;
 
 	/**
 	 * 检查认证状态

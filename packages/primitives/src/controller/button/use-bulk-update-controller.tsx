@@ -8,7 +8,8 @@ import {
 	useTranslate,
 	useUpdateMany,
 } from "@runes/core";
-import { useCallback, useMemo } from "react";
+import { useEvent } from "@runes/misc";
+import { useMemo } from "react";
 import { useListContext } from "../list/use-list-context";
 
 export const useBulkUpdateController = <
@@ -73,30 +74,20 @@ export const useBulkUpdateController = <
 		},
 	);
 
-	const handleUpdate = useCallback(
-		(data: Partial<RecordType>) => {
-			updateMany(
-				resource,
-				{
-					data,
-					ids: selectedIds,
-					meta: mutationMeta,
-				},
-				{
-					mutationMode,
-					...otherMutationOptions,
-				},
-			);
-		},
-		[
-			updateMany,
-			mutationMeta,
-			mutationMode,
-			otherMutationOptions,
+	const handleUpdate = useEvent((data: Partial<RecordType>) => {
+		updateMany(
 			resource,
-			selectedIds,
-		],
-	);
+			{
+				data,
+				ids: selectedIds,
+				meta: mutationMeta,
+			},
+			{
+				mutationMode,
+				...otherMutationOptions,
+			},
+		);
+	});
 
 	return useMemo(
 		() => ({

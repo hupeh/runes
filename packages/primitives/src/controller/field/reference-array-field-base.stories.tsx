@@ -5,8 +5,8 @@ import {
 	useIsOffline,
 	WithRecord,
 } from "@runes/core";
+import fakeRestProvider from "@runes/data-fakerest";
 import { onlineManager, QueryClient } from "@tanstack/react-query";
-import fakeRestProvider from "ra-data-fakerest";
 import { useState } from "react";
 import { useListContext } from "../list";
 import { ShowBase } from "../show";

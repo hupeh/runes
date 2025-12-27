@@ -1,6 +1,8 @@
 import {
+	type AuthProvider,
 	CoreContext,
 	type DataProvider,
+	type NotificationPayload,
 	testDataProvider,
 	useNotificationContext,
 } from "@runes/core";
@@ -14,13 +16,17 @@ import {
 import React from "react";
 import { Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
+import { Form, type InputProps, useInput } from "../../form";
+import { TestMemoryRouter } from "../../routing";
 import {
 	type Middleware,
 	SaveContextProvider,
+	type SaveHandler,
 	useRegisterMutationMiddleware,
 } from "../save-context";
 import { CreateContextProvider } from "./create-context-provider";
 import { CreateController } from "./create-controller";
+import { useCreateController } from "./use-create-controller";
 import {
 	CanAccess,
 	DisableAuthentication,
@@ -39,7 +45,7 @@ describe("useCreateController", () => {
 	it("should call the dataProvider.create() function on save", async () => {
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
-			create: jest
+			create: vi
 				.fn()
 				.mockImplementationOnce((_, { data }) =>
 					Promise.resolve({ data: { id: 123, ...data } }),
@@ -63,15 +69,13 @@ describe("useCreateController", () => {
 	});
 
 	it("should execute default success side effects on success", async () => {
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
-			create: (_, { data }) =>
-				// @ts-expect-error
-				Promise.resolve({ data: { id: 123, ...data } }),
+			create: (_, { data }) => Promise.resolve({ data: { id: 123, ...data } }),
 		});
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -91,7 +95,7 @@ describe("useCreateController", () => {
 				</CreateController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		expect(notificationsSpy).toEqual([
 			{
 				message: "resources.posts.notifications.created",
@@ -109,13 +113,13 @@ describe("useCreateController", () => {
 
 	it("should execute default failure side effects on failure", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
 			create: () => Promise.reject({ message: "not good" }),
 		});
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -147,13 +151,13 @@ describe("useCreateController", () => {
 
 	it("should use the default error message in case no message was provided", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
 			create: () => Promise.reject({}),
 		});
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -173,7 +177,7 @@ describe("useCreateController", () => {
 				</CreateController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		expect(notificationsSpy).toEqual([
 			{
 				message: "ra.notification.http_error",
@@ -185,13 +189,13 @@ describe("useCreateController", () => {
 
 	it("should not trigger a notification in case of a validation error (handled by useNotifyIsFormInvalid)", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
 			create: () => Promise.reject({ body: { errors: { foo: "invalid" } } }),
 		});
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -211,21 +215,19 @@ describe("useCreateController", () => {
 				</CreateController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		expect(notificationsSpy).toEqual([]);
 	});
 
 	it("should allow mutationOptions to override the default success side effects", async () => {
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
-			create: (_, { data }) =>
-				// @ts-expect-error
-				Promise.resolve({ data: { id: 123, ...data } }),
+			create: (_, { data }) => Promise.resolve({ data: { id: 123, ...data } }),
 		});
 		const onSuccess = vi.fn();
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -245,23 +247,21 @@ describe("useCreateController", () => {
 				</CreateController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await waitFor(() => expect(onSuccess).toHaveBeenCalled());
 		expect(notificationsSpy).toEqual([]);
 	});
 
 	it("should allow the save onSuccess option to override the success side effects override", async () => {
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
-			create: (_, { data }) =>
-				// @ts-expect-error
-				Promise.resolve({ data: { id: 123, ...data } }),
+			create: (_, { data }) => Promise.resolve({ data: { id: 123, ...data } }),
 		});
 		const onSuccess = vi.fn();
 		const onSuccessSave = vi.fn();
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -282,12 +282,7 @@ describe("useCreateController", () => {
 			</CoreContext>,
 		);
 		await act(async () =>
-			saveCallback(
-				{ foo: "bar" },
-				{
-					onSuccess: onSuccessSave,
-				},
-			),
+			saveCallback?.({ foo: "bar" }, { onSuccess: onSuccessSave }),
 		);
 		expect(onSuccess).not.toHaveBeenCalled();
 		expect(onSuccessSave).toHaveBeenCalled();
@@ -296,14 +291,14 @@ describe("useCreateController", () => {
 
 	it("should allow mutationOptions to override the default failure side effects", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
 			create: () => Promise.reject({ message: "not good" }),
 		});
 		const onError = vi.fn();
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -323,14 +318,14 @@ describe("useCreateController", () => {
 				</CreateController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await waitFor(() => expect(onError).toHaveBeenCalled());
 		expect(notificationsSpy).toEqual([]);
 	});
 
 	it("should accept meta in mutationOptions", async () => {
-		let saveCallback;
-		const create = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const create = vi
 			.fn()
 			.mockImplementationOnce((_, { data }) =>
 				Promise.resolve({ data: { id: 123, ...data } }),
@@ -353,7 +348,7 @@ describe("useCreateController", () => {
 				</CreateController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		expect(create).toHaveBeenCalledWith("posts", {
 			data: { foo: "bar" },
 			meta: { lorem: "ipsum" },
@@ -361,8 +356,8 @@ describe("useCreateController", () => {
 	});
 
 	it("should accept meta as a save option", async () => {
-		let saveCallback;
-		const create = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const create = vi
 			.fn()
 			.mockImplementationOnce((_, { data }) =>
 				Promise.resolve({ data: { id: 123, ...data } }),
@@ -383,7 +378,7 @@ describe("useCreateController", () => {
 			</CoreContext>,
 		);
 		await act(async () =>
-			saveCallback({ foo: "bar" }, { meta: { lorem: "ipsum" } }),
+			saveCallback?.({ foo: "bar" }, { meta: { lorem: "ipsum" } }),
 		);
 		expect(create).toHaveBeenCalledWith("posts", {
 			data: { foo: "bar" },
@@ -393,7 +388,7 @@ describe("useCreateController", () => {
 
 	it("should allow the save onError option to override the failure side effects override", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = testDataProvider({
 			getOne: () => Promise.resolve({ data: { id: 12 } } as any),
 			create: () => Promise.reject({ message: "not good" }),
@@ -401,7 +396,7 @@ describe("useCreateController", () => {
 		const onError = vi.fn();
 		const onErrorSave = vi.fn();
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -422,12 +417,7 @@ describe("useCreateController", () => {
 			</CoreContext>,
 		);
 		await act(async () =>
-			saveCallback(
-				{ foo: "bar" },
-				{
-					onError: onErrorSave,
-				},
-			),
+			saveCallback?.({ foo: "bar" }, { onError: onErrorSave }),
 		);
 		expect(onError).not.toHaveBeenCalled();
 		expect(onErrorSave).toHaveBeenCalled();
@@ -435,8 +425,8 @@ describe("useCreateController", () => {
 	});
 
 	it("should allow transform to transform the data before calling create", async () => {
-		let saveCallback;
-		const create = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const create = vi
 			.fn()
 			.mockImplementationOnce((_, { data }) =>
 				Promise.resolve({ data: { id: 123, ...data } }),
@@ -459,7 +449,7 @@ describe("useCreateController", () => {
 				</CreateController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		expect(transform).toHaveBeenCalledWith({ foo: "bar" });
 		expect(create).toHaveBeenCalledWith("posts", {
 			data: { foo: "bar", transformed: true },
@@ -467,8 +457,8 @@ describe("useCreateController", () => {
 	});
 
 	it("should allow the save transform option to override the controller transform option", async () => {
-		let saveCallback;
-		const create = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const create = vi
 			.fn()
 			.mockImplementationOnce((_, { data }) =>
 				Promise.resolve({ data: { id: 123, ...data } }),
@@ -493,7 +483,7 @@ describe("useCreateController", () => {
 			</CoreContext>,
 		);
 		await act(async () =>
-			saveCallback(
+			saveCallback?.(
 				{ foo: "bar" },
 				{
 					transform: transformSave,
@@ -508,8 +498,8 @@ describe("useCreateController", () => {
 	});
 
 	it("should allow to register middlewares", async () => {
-		let saveCallback;
-		const create = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const create = vi
 			.fn()
 			.mockImplementationOnce((_, { data }) =>
 				Promise.resolve({ data: { id: 123, ...data } }),
@@ -556,7 +546,7 @@ describe("useCreateController", () => {
 				</CreateController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 
 		expect(create).toHaveBeenCalledWith("posts", {
 			data: { foo: "bar" },
@@ -578,7 +568,7 @@ describe("useCreateController", () => {
 		const dataProvider = {
 			create,
 		} as unknown as DataProvider;
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		render(
 			<CoreContext dataProvider={dataProvider}>
 				<CreateController {...defaultProps}>
@@ -590,9 +580,9 @@ describe("useCreateController", () => {
 			</CoreContext>,
 		);
 		await new Promise((resolve) => setTimeout(resolve, 10));
-		let errors;
+		let errors: any | undefined;
 		await act(async () => {
-			errors = await saveCallback({ foo: "bar" });
+			errors = await saveCallback?.({ foo: "bar" });
 		});
 		expect(errors).toEqual({ foo: "invalid" });
 		expect(create).toHaveBeenCalledWith("posts", {

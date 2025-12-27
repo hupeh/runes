@@ -1,5 +1,6 @@
 import {
 	CoreContext,
+	type NotificationPayload,
 	testDataProvider,
 	type UndoableMutation,
 	useNotificationContext,
@@ -9,21 +10,22 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import useDeleteWithUndoController, {
+import {
 	type UseDeleteWithUndoControllerParams,
+	useDeleteWithUndoController,
 } from "./use-delete-with-undo-controller";
 
 describe("useDeleteWithUndoController", () => {
 	it("should call the dataProvider.delete() function with the meta param", async () => {
-		let receivedMeta = null;
+		let receivedMeta: any = null;
 		const dataProvider = testDataProvider({
-			delete: vi.fn((ressource, params) => {
+			delete: vi.fn((_resource, params) => {
 				receivedMeta = params?.meta?.key;
 				return Promise.resolve({ data: params?.meta?.key });
 			}),
 		});
 
-		let takeMutation: () => UndoableMutation | void;
+		let takeMutation: (() => UndoableMutation | void) | undefined;
 		const MutationTrigger = () => {
 			takeMutation = useTakeUndoableMutation();
 			return null;
@@ -57,7 +59,7 @@ describe("useDeleteWithUndoController", () => {
 
 		// Trigger the mutation.
 		await waitFor(() => new Promise((resolve) => setTimeout(resolve, 0)));
-		const mutation = takeMutation();
+		const mutation = takeMutation?.();
 		if (mutation) mutation({ isUndo: false });
 
 		await waitFor(() => expect(receivedMeta).toEqual("metadata"), {
@@ -84,7 +86,7 @@ describe("useDeleteWithUndoController", () => {
 			);
 		};
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {

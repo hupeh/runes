@@ -42,7 +42,7 @@ import {
  *     );
  * };
  */
-const useDeleteWithUndoController = <
+export const useDeleteWithUndoController = <
 	RecordType extends Data = any,
 	ErrorType = Error,
 >(
@@ -79,5 +79,3 @@ export interface UseDeleteWithUndoControllerReturn
 	extends Omit<UseDeleteControllerReturn, "handleDelete"> {
 	handleDelete: ReactEventHandler<any>;
 }
-
-export default useDeleteWithUndoController;

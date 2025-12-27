@@ -1,5 +1,3 @@
-import type { ExtractRecordPaths } from "../../types";
-
 export interface BaseFieldProps<
 	RecordType extends Record<string, any> = Record<string, any>,
 > {

@@ -1,9 +1,4 @@
-import React, { type ReactNode, useMemo } from "react";
-import { ResourceContextProvider } from "../../core";
-import type { LinkToType } from "../../routing";
-import { useGetPathForRecord } from "../../routing";
-import type { RaRecord } from "../../types";
-import { RecordContextProvider, useRecordContext } from "../record";
+import { type ReactNode, useMemo } from "react";
 import type { UseReferenceResult } from "../use-reference";
 import { ReferenceFieldContextProvider } from "./reference-field-context";
 import type { UseReferenceFieldControllerResult } from "./use-reference-field-controller";

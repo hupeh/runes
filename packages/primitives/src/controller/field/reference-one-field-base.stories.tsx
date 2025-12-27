@@ -1,15 +1,5 @@
 import { onlineManager } from "@tanstack/react-query";
 import * as React from "react";
-import {
-	CoreAdminContext,
-	IsOffline,
-	RecordContextProvider,
-	ReferenceOneFieldBase,
-	ResourceContextProvider,
-	TestMemoryRouter,
-	useIsOffline,
-	useReferenceFieldContext,
-} from "../..";
 
 export default { title: "ra-core/controller/field/ReferenceOneFieldBase" };
 

@@ -76,7 +76,7 @@ export const useUpdateController = <
 		successMessage,
 	} = props;
 	const { meta: mutationMeta, ...otherMutationOptions } = mutationOptions;
-	const record = useDataContext(props);
+	const record = useDataContext<RecordType>(props);
 	const resource = useResourceContext(props);
 	const notify = useNotify();
 	const redirect = useRedirect();
@@ -100,7 +100,7 @@ export const useUpdateController = <
 						undoable: mutationMode === "undoable",
 					},
 				);
-				redirect(redirectTo, resource);
+				redirect(redirectTo, { params: { resource } });
 			},
 			onError: (error: any) => {
 				notify(

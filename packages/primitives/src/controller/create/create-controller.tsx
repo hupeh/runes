@@ -20,7 +20,7 @@ import {
  * );
  */
 export const CreateController = <
-	RecordType extends Omit<Data, "id"> = any,
+	RecordType extends Data = any,
 	MutationOptionsError = Error,
 >({
 	children,

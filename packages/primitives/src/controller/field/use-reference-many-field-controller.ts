@@ -3,19 +3,11 @@ import lodashDebounce from "lodash/debounce.js";
 import get from "lodash/get.js";
 import isEqual from "lodash/isEqual.js";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useResourceContext } from "../../core";
-import { useDataProvider, useGetManyReference } from "../../dataProvider";
-import { useNotify } from "../../notification";
-import type {
-	FilterPayload,
-	Identifier,
-	RaRecord,
-	SortPayload,
-} from "../../types";
-import { removeEmpty, useEvent } from "../../util";
-import type { HandleSelectAllParams, ListControllerResult } from "../list";
-import { useRecordSelection } from "../list/use-record-selection";
-import { useRecordContext } from "../record";
+import {
+	type HandleSelectAllParams,
+	type ListControllerResult,
+	useRecordSelection,
+} from "../list";
 import usePaginationState from "../use-pagination-state";
 import useSortState from "../use-sort-state";
 

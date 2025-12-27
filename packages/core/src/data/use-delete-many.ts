@@ -324,7 +324,7 @@ export type UseDeleteManyOptions<
 		Array<DataType["id"]> | undefined,
 		MutationErrorType,
 		Partial<UseDeleteManyMutateParams<DataType>>,
-		OnMutateResult
+		OnMutateResult | undefined
 	>,
 	"mutationFn"
 > & {
@@ -351,7 +351,7 @@ export type UseDeleteManyResult<
 			DataType["id"][] | undefined,
 			MutationErrorType,
 			Partial<UseDeleteManyMutateParams<DataType>>,
-			OnMutateResult
+			OnMutateResult | undefined
 		> & {
 			mutationMode?: MutationMode;
 			returnPromise?: ReturnPromiseType;
@@ -361,6 +361,6 @@ export type UseDeleteManyResult<
 		DataType["id"][] | undefined,
 		MutationErrorType,
 		Partial<DeleteManyParams<DataType> & { resource?: string }>,
-		OnMutateResult
+		OnMutateResult | undefined
 	> & { isLoading: boolean },
 ];

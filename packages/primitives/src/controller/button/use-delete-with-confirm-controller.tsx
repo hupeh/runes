@@ -7,12 +7,12 @@ import {
 } from "@runes/core";
 import { useEvent } from "@runes/misc";
 import { type ReactEventHandler, type SyntheticEvent, useState } from "react";
+import { useUnselect } from "../list";
 import {
 	type UseDeleteControllerParams,
 	type UseDeleteControllerReturn,
 	useDeleteController,
-	useUnselect,
-} from "../";
+} from "./use-delete-controller";
 
 /**
  * Prepare a set of callbacks for a delete button guarded by confirmation dialog
@@ -69,7 +69,7 @@ import {
  *     );
  * };
  */
-const useDeleteWithConfirmController = <
+export const useDeleteWithConfirmController = <
 	RecordType extends Data = any,
 	ErrorType = Error,
 >(
@@ -111,7 +111,7 @@ const useDeleteWithConfirmController = <
 						},
 					);
 					record && unselect([record.id], true);
-					redirect(redirectTo, resource);
+					redirect(redirectTo, { params: { resource } });
 				},
 				onError: (error) => {
 					setOpen(false);
@@ -152,7 +152,7 @@ const useDeleteWithConfirmController = <
 	});
 
 	const handleDelete = useEvent((event: any) => {
-		if (event && event.stopPropagation) {
+		if (event?.stopPropagation) {
 			event.stopPropagation();
 		}
 		controllerHandleDelete();
@@ -185,5 +185,3 @@ export interface UseDeleteWithConfirmControllerReturn
 	handleDialogClose: (e: SyntheticEvent) => void;
 	handleDelete: ReactEventHandler<any>;
 }
-
-export default useDeleteWithConfirmController;

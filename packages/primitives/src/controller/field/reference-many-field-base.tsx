@@ -1,6 +1,4 @@
-import React, { type ReactNode } from "react";
-import { ResourceContextProvider } from "../../core";
-import type { RaRecord } from "../../types";
+import type { ReactNode } from "react";
 import type { ListControllerResult } from "../list";
 import { ListContextProvider } from "../list/list-context-provider";
 import {

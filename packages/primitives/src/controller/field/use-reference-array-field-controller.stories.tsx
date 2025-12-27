@@ -1,12 +1,3 @@
-import * as React from "react";
-import {
-	CoreAdminContext,
-	type GetManyResult,
-	type ListControllerResult,
-	testDataProvider,
-	useReferenceArrayFieldController,
-} from "../..";
-
 const dataProvider = testDataProvider({
 	getMany: (_resource, _params): Promise<GetManyResult> =>
 		Promise.resolve({

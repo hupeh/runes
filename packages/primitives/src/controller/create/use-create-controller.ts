@@ -1,8 +1,8 @@
 import {
 	type Data,
 	HttpError,
-	type Identifier,
 	type MutationMode,
+	type OnMutateResult,
 	type RedirectionSideEffect,
 	type TransformData,
 	type UseCreateMutateParams,
@@ -13,7 +13,6 @@ import {
 	useRedirect,
 	useRequireAccess,
 	useResourceContext,
-	useResourceDefinition,
 	useTranslate,
 } from "@runes/core";
 import type { UseMutationOptions } from "@tanstack/react-query";
@@ -23,6 +22,12 @@ import {
 	type SaveHandlerCallbacks,
 	useMutationMiddlewares,
 } from "../save-context";
+
+const hasBody = (error: unknown): error is { body: { errors?: any } } => {
+	return (
+		typeof error === "object" && error !== null && Object.hasOwn(error, "body")
+	);
+};
 
 /**
  * Prepare data for the Create view
@@ -42,9 +47,9 @@ import {
  * }
  */
 export const useCreateController = <
-	RecordType extends Omit<Data, "id"> = any,
+	RecordType extends Data = any,
 	MutationOptionsError = Error,
-	ResultRecordType extends Data = RecordType & { id: Identifier },
+	ResultRecordType extends RecordType = RecordType,
 >(
 	props: CreateControllerProps<
 		RecordType,
@@ -70,14 +75,13 @@ export const useCreateController = <
 	const { isPending: isPendingAuthenticated } = useAuthenticated({
 		enabled: !disableAuthentication,
 	});
-	const { isPending: isPendingCanAccess } = useRequireAccess<RecordType>({
-		action: "create",
-		resource,
-		enabled: !disableAuthentication && !isPendingAuthenticated,
-	});
-	const { hasEdit, hasShow } = useResourceDefinition(props);
-	const finalRedirectTo =
-		redirectTo ?? getDefaultRedirectRoute(hasShow, hasEdit);
+	const { isPending: isPendingCanAccess } =
+		useRequireAccess<MutationOptionsError>({
+			action: "create",
+			resource,
+			enabled: !disableAuthentication && !isPendingAuthenticated,
+		});
+	const finalRedirectTo = redirectTo;
 	const translate = useTranslate();
 	const notify = useNotify();
 	const redirect = useRedirect();
@@ -108,7 +112,9 @@ export const useCreateController = <
 				},
 				undoable: mutationMode === "undoable",
 			});
-			redirect(finalRedirectTo, resource, data.id, data);
+			if (finalRedirectTo) {
+				redirect(finalRedirectTo, { params: [resource, data.id, data] });
+			}
 		},
 		onError: (...args) => {
 			if (onError) {
@@ -176,13 +182,7 @@ export const useCreateController = <
 						},
 					);
 				} catch (error) {
-					if (
-						(error instanceof HttpError ||
-							(typeof error === "object" &&
-								error !== null &&
-								Object.hasOwn(error, "body"))) &&
-						error.body?.errors != null
-					) {
+					if (error instanceof HttpError || hasBody(error)) {
 						return error.body.errors;
 					}
 				}
@@ -214,13 +214,11 @@ export const useCreateController = <
 };
 
 export interface CreateControllerProps<
-	RecordType extends Omit<Data, "id"> = any,
+	RecordType extends Data = any,
 	MutationOptionsError = Error,
-	ResultRecordType extends Data = RecordType & { id: Identifier },
+	ResultRecordType extends RecordType = RecordType,
 > {
 	disableAuthentication?: boolean;
-	hasEdit?: boolean;
-	hasShow?: boolean;
 	record?: Partial<RecordType>;
 	redirect?: RedirectionSideEffect;
 	resource?: string;
@@ -228,30 +226,20 @@ export interface CreateControllerProps<
 	mutationOptions?: UseMutationOptions<
 		ResultRecordType,
 		MutationOptionsError,
-		UseCreateMutateParams<RecordType>
+		UseCreateMutateParams<RecordType>,
+		OnMutateResult | undefined
 	> & { meta?: any };
 	transform?: TransformData;
 }
 
-export interface CreateControllerResult<
-	RecordType extends Omit<Data, "id"> = any,
-> extends SaveContextValue {
+export interface CreateControllerResult<RecordType extends Data = any>
+	extends SaveContextValue {
 	defaultTitle?: string;
 	isFetching: boolean;
 	isPending: boolean;
 	isLoading: boolean;
 	record?: Partial<RecordType>;
-	redirect: RedirectionSideEffect;
+	redirect?: RedirectionSideEffect;
 	resource: string;
 	saving: boolean;
 }
-
-const getDefaultRedirectRoute = (hasShow, hasEdit) => {
-	if (hasEdit) {
-		return "edit";
-	}
-	if (hasShow) {
-		return "show";
-	}
-	return "list";
-};

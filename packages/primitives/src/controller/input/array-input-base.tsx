@@ -1,18 +1,5 @@
-import * as React from "react";
 import { type ReactNode, useEffect } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import {
-	OptionalResourceContextProvider,
-	SourceContextProvider,
-	type SourceContextValue,
-	useSourceContext,
-} from "../../core";
-import { useFormGroupContext } from "../../form/groups/use-form-group-context";
-import { useFormGroups } from "../../form/groups/use-form-groups";
-import { useApplyInputDefaultValues } from "../../form/use-apply-input-default-values";
-import type { InputProps } from "../../form/use-input";
-import { useGetValidationErrorMessage } from "../../form/validation/use-get-validation-error-message";
-import { composeSyncValidators } from "../../form/validation/validate";
 import { ArrayInputContext } from "./array-input-context";
 
 /**

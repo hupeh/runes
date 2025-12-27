@@ -1,8 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import * as React from "react";
 import { describe, expect, it, vi } from "vitest";
-import { CoreAdminContext } from "../../core";
-import { testDataProvider } from "../../dataProvider/testDataProvider";
 import { useReferenceOneFieldController } from "./use-reference-one-field-controller";
 
 const ReferenceOneFieldController = (props) => {

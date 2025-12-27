@@ -1,6 +1,6 @@
 import getValuesFromRecords from "./get-values-from-records";
-import type InferredElement from "./inferred-element";
 import inferElementFromValues from "./infer-element-from-values";
+import type InferredElement from "./inferred-element";
 import type { InferredTypeMap } from "./types";
 
 /**

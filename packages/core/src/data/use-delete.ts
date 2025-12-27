@@ -247,7 +247,7 @@ export const useDelete = <
 			callTimeResource: string | undefined = resource,
 			callTimeParams: Partial<DeleteParams<DataType>> = {},
 			callTimeOptions: MutateOptions<
-				DataType | undefined,
+				DataType,
 				MutationErrorType,
 				Partial<UseDeleteMutateParams<DataType>>,
 				OnMutateResult
@@ -293,7 +293,7 @@ export type UseDeleteOptions<DataType extends Data, MutationErrorType> = Omit<
 		DataType,
 		MutationErrorType,
 		Partial<UseDeleteMutateParams<DataType>>,
-		OnMutateResult
+		OnMutateResult | undefined
 	>,
 	"mutationFn"
 > & {
@@ -317,10 +317,10 @@ export type UseDeleteResult<
 		resource?: string,
 		params?: Partial<DeleteParams<DataType>>,
 		options?: MutateOptions<
-			DataType | undefined,
+			DataType,
 			MutationErrorType,
 			Partial<UseDeleteMutateParams<DataType>>,
-			OnMutateResult
+			OnMutateResult | undefined
 		> & {
 			mutationMode?: MutationMode;
 			returnPromise?: ReturnPromiseType;
@@ -330,6 +330,6 @@ export type UseDeleteResult<
 		DataType | undefined,
 		MutationErrorType,
 		Partial<DeleteParams<DataType> & { resource?: string }>,
-		OnMutateResult
+		OnMutateResult | undefined
 	> & { isLoading: boolean },
 ];

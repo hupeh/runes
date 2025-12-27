@@ -2,6 +2,7 @@ import {
 	type AuthProvider,
 	CoreContext,
 	type DataProvider,
+	type NotificationPayload,
 	type RedirectionSideEffect,
 	testDataProvider,
 	useNotificationContext,
@@ -16,15 +17,16 @@ import {
 } from "@testing-library/react";
 import * as React from "react";
 import { Route, Routes } from "react-router";
-import { afterEach, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Form, type InputProps, useInput } from "../../form";
 import {
-	EditContextProvider,
-	SaveContextProvider,
-	useEditController,
-} from "..";
-import { type Middleware, useRegisterMutationMiddleware } from "../save-context";
+	type Middleware,
+	type SaveHandler,
+	useRegisterMutationMiddleware,
+} from "../save-context";
+import { EditContextProvider } from "./edit-context-provider";
 import { EditController } from "./edit-controller";
+import { useEditController } from "./use-edit-controller";
 import {
 	Authenticated,
 	CanAccess,
@@ -61,7 +63,7 @@ describe("useEditController", () => {
 	});
 
 	it("should call the dataProvider.getOne() function on mount", async () => {
-		const getOne = jest
+		const getOne = vi
 			.fn()
 			.mockImplementationOnce(() =>
 				Promise.resolve({ data: { id: 12, title: "hello" } }),
@@ -84,7 +86,7 @@ describe("useEditController", () => {
 		{ id: "test?", url: "/posts/test%3F" },
 		{ id: "test%", url: "/posts/test%25" },
 	])("should decode the id $id from the route params", async ({ id, url }) => {
-		const getOne = jest
+		const getOne = vi
 			.fn()
 			.mockImplementationOnce(() =>
 				Promise.resolve({ data: { id, title: "hello" } }),
@@ -104,7 +106,7 @@ describe("useEditController", () => {
 	});
 
 	it("should use the id provided through props if any", async () => {
-		const getOne = jest
+		const getOne = vi
 			.fn()
 			.mockImplementationOnce(() =>
 				Promise.resolve({ data: { id: 0, title: "hello" } }),
@@ -139,7 +141,7 @@ describe("useEditController", () => {
 	});
 
 	it("should return the `redirect` provided through props or the default", async () => {
-		const getOne = jest
+		const getOne = vi
 			.fn()
 			.mockImplementationOnce(() =>
 				Promise.resolve({ data: { id: 12, title: "hello" } }),
@@ -170,7 +172,7 @@ describe("useEditController", () => {
 	describe("queryOptions", () => {
 		it("should accept custom client query options", async () => {
 			vi.spyOn(console, "error").mockImplementationOnce(() => {});
-			const getOne = jest
+			const getOne = vi
 				.fn()
 				.mockImplementationOnce(() => Promise.reject(new Error()));
 			const onError = vi.fn();
@@ -195,7 +197,7 @@ describe("useEditController", () => {
 		});
 
 		it("should accept a meta in query options", async () => {
-			const getOne = jest
+			const getOne = vi
 				.fn()
 				.mockImplementationOnce(() =>
 					Promise.resolve({ data: { id: 0, title: "hello" } }),
@@ -233,7 +235,7 @@ describe("useEditController", () => {
 	});
 
 	it("should call the dataProvider.update() function on save", async () => {
-		const update = jest
+		const update = vi
 			.fn()
 			.mockImplementationOnce((_, { id, data, previousData }) =>
 				Promise.resolve({ data: { id, ...previousData, ...data } }),
@@ -278,7 +280,7 @@ describe("useEditController", () => {
 	it("should return an undoable save callback by default", async () => {
 		window.confirm = vi.fn().mockReturnValue(true);
 		let post = { id: 12, test: "previous" };
-		const update = jest
+		const update = vi
 			.fn()
 			.mockImplementationOnce((_, { data, previousData }) => {
 				post = { ...previousData, ...data };
@@ -332,7 +334,7 @@ describe("useEditController", () => {
 
 	it("should return an immediate save callback when mutationMode is pessimistic", async () => {
 		let post = { id: 12 };
-		const update = jest
+		const update = vi
 			.fn()
 			.mockImplementationOnce((_, { data, previousData }) => {
 				post = { ...previousData, ...data };
@@ -342,7 +344,7 @@ describe("useEditController", () => {
 			getOne: () => Promise.resolve({ data: post }),
 			update,
 		} as unknown as DataProvider;
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		render(
 			<CoreContext dataProvider={dataProvider}>
 				<EditController {...defaultProps} mutationMode="pessimistic">
@@ -354,7 +356,7 @@ describe("useEditController", () => {
 			</CoreContext>,
 		);
 		await screen.findByText('{"id":12}');
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await screen.findByText('{"id":12,"foo":"bar"}');
 		expect(update).toHaveBeenCalledWith("posts", {
 			id: 12,
@@ -364,14 +366,14 @@ describe("useEditController", () => {
 	});
 
 	it("should execute success side effects on success in pessimistic mode", async () => {
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = {
 			getOne: () => Promise.resolve({ data: { id: 12 } }),
 			update: (_, { id, data, previousData }) =>
 				Promise.resolve({ data: { id, ...previousData, ...data } }),
 		} as unknown as DataProvider;
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -391,7 +393,7 @@ describe("useEditController", () => {
 				</EditController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await waitFor(() =>
 			expect(notificationsSpy).toEqual([
 				{
@@ -411,7 +413,7 @@ describe("useEditController", () => {
 
 	describe("mutationOptions", () => {
 		it("should allow mutationOptions to override the default success side effects in pessimistic mode", async () => {
-			let saveCallback;
+			let saveCallback: SaveHandler<any> | undefined;
 			const dataProvider = {
 				getOne: () => Promise.resolve({ data: { id: 12 } }),
 				update: (_, { id, data, previousData }) =>
@@ -419,7 +421,7 @@ describe("useEditController", () => {
 			} as unknown as DataProvider;
 			const onSuccess = vi.fn();
 
-			let notificationsSpy;
+			let notificationsSpy: NotificationPayload[] | undefined;
 			const Notification = () => {
 				const { notifications } = useNotificationContext();
 				React.useEffect(() => {
@@ -444,7 +446,7 @@ describe("useEditController", () => {
 				</CoreContext>,
 			);
 			await screen.findByText("12");
-			await act(async () => saveCallback({ foo: "bar" }));
+			await act(async () => saveCallback?.({ foo: "bar" }));
 			await waitFor(() =>
 				expect(onSuccess).toHaveBeenCalledWith(
 					{
@@ -466,7 +468,7 @@ describe("useEditController", () => {
 		});
 
 		it("should allow mutationOptions to override the default success side effects in optimistic mode", async () => {
-			let saveCallback;
+			let saveCallback: SaveHandler<any> | undefined;
 			const dataProvider = {
 				getOne: () => Promise.resolve({ data: { id: 12 } }),
 				update: (_, { id, data, previousData }) =>
@@ -474,7 +476,7 @@ describe("useEditController", () => {
 			} as unknown as DataProvider;
 			const onSuccess = vi.fn();
 
-			let notificationsSpy;
+			let notificationsSpy: NotificationPayload[] | undefined;
 			const Notification = () => {
 				const { notifications } = useNotificationContext();
 				React.useEffect(() => {
@@ -499,7 +501,7 @@ describe("useEditController", () => {
 				</CoreContext>,
 			);
 			await screen.findByText("12");
-			await act(async () => saveCallback({ foo: "bar" }));
+			await act(async () => saveCallback?.({ foo: "bar" }));
 			await waitFor(() =>
 				expect(onSuccess).toHaveBeenCalledWith(
 					{
@@ -521,7 +523,7 @@ describe("useEditController", () => {
 		});
 
 		it("should allow mutationOptions to override the default success side effects in undoable mode", async () => {
-			let saveCallback;
+			let saveCallback: SaveHandler<any> | undefined;
 			const dataProvider = {
 				getOne: () => Promise.resolve({ data: { id: 12 } }),
 				update: (_, { id, data, previousData }) =>
@@ -529,7 +531,7 @@ describe("useEditController", () => {
 			} as unknown as DataProvider;
 			const onSuccess = vi.fn();
 
-			let notificationsSpy;
+			let notificationsSpy: NotificationPayload[] | undefined;
 			const Notification = () => {
 				const { notifications } = useNotificationContext();
 				React.useEffect(() => {
@@ -550,7 +552,7 @@ describe("useEditController", () => {
 				</CoreContext>,
 			);
 			await screen.findByText("12");
-			await act(async () => saveCallback({ foo: "bar" }));
+			await act(async () => saveCallback?.({ foo: "bar" }));
 			await waitFor(() =>
 				expect(onSuccess).toHaveBeenCalledWith(
 					{
@@ -573,14 +575,14 @@ describe("useEditController", () => {
 
 		it("should allow mutationOptions to override the default failure side effects in pessimistic mode", async () => {
 			vi.spyOn(console, "error").mockImplementation(() => {});
-			let saveCallback;
+			let saveCallback: SaveHandler<any> | undefined;
 			const dataProvider = {
 				getOne: () => Promise.resolve({ data: { id: 12 } }),
 				update: () => Promise.reject({ message: "not good" }),
 			} as unknown as DataProvider;
 			const onError = vi.fn();
 
-			let notificationsSpy;
+			let notificationsSpy: NotificationPayload[] | undefined;
 			const Notification = () => {
 				const { notifications } = useNotificationContext();
 				React.useEffect(() => {
@@ -604,7 +606,7 @@ describe("useEditController", () => {
 					</EditController>
 				</CoreContext>,
 			);
-			await act(async () => saveCallback({ foo: "bar" }));
+			await act(async () => saveCallback?.({ foo: "bar" }));
 			await new Promise((resolve) => setTimeout(resolve, 10));
 			await waitFor(() => expect(onError).toHaveBeenCalled());
 			expect(notificationsSpy).toEqual([]);
@@ -612,14 +614,14 @@ describe("useEditController", () => {
 
 		it("should allow mutationOptions to override the default failure side effects in optimistic mode", async () => {
 			vi.spyOn(console, "error").mockImplementation(() => {});
-			let saveCallback;
+			let saveCallback: SaveHandler<any> | undefined;
 			const dataProvider = {
 				getOne: () => Promise.resolve({ data: { id: 12 } }),
 				update: () => Promise.reject({ message: "not good" }),
 			} as unknown as DataProvider;
 			const onError = vi.fn();
 
-			let notificationsSpy;
+			let notificationsSpy: NotificationPayload[] | undefined;
 			const Notification = () => {
 				const { notifications } = useNotificationContext();
 				React.useEffect(() => {
@@ -644,7 +646,7 @@ describe("useEditController", () => {
 				</CoreContext>,
 			);
 			await waitFor(() => expect(saveCallback).toBeDefined());
-			await act(async () => saveCallback({ foo: "bar" }));
+			await act(async () => saveCallback?.({ foo: "bar" }));
 			await new Promise((resolve) => setTimeout(resolve, 10));
 			await waitFor(() => expect(onError).toHaveBeenCalled());
 			// we get the (optimistic) success notification but not the error notification
@@ -664,8 +666,8 @@ describe("useEditController", () => {
 		});
 
 		it("should accept meta in mutationOptions", async () => {
-			let saveCallback;
-			const update = jest
+			let saveCallback: SaveHandler<any> | undefined;
+			const update = vi
 				.fn()
 				.mockImplementationOnce((_, { id, data, previousData }) =>
 					Promise.resolve({ data: { id, ...previousData, ...data } }),
@@ -689,7 +691,7 @@ describe("useEditController", () => {
 					</EditController>
 				</CoreContext>,
 			);
-			await act(async () => saveCallback({ foo: "bar" }));
+			await act(async () => saveCallback?.({ foo: "bar" }));
 			await waitFor(() => {
 				expect(update).toHaveBeenCalledWith("posts", {
 					id: 12,
@@ -702,8 +704,8 @@ describe("useEditController", () => {
 	});
 
 	it("should accept meta as a save option", async () => {
-		let saveCallback;
-		const update = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const update = vi
 			.fn()
 			.mockImplementationOnce((_, { id, data, previousData }) =>
 				Promise.resolve({ data: { id, ...previousData, ...data } }),
@@ -724,7 +726,7 @@ describe("useEditController", () => {
 			</CoreContext>,
 		);
 		await act(async () =>
-			saveCallback({ foo: "bar" }, { meta: { lorem: "ipsum" } }),
+			saveCallback?.({ foo: "bar" }, { meta: { lorem: "ipsum" } }),
 		);
 		await waitFor(() => {
 			expect(update).toHaveBeenCalledWith("posts", {
@@ -737,7 +739,7 @@ describe("useEditController", () => {
 	});
 
 	it("should allow the save onSuccess option to override the success side effects override", async () => {
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = {
 			getOne: () => Promise.resolve({ data: { id: 12 } }),
 			update: (_, { id, data, previousData }) =>
@@ -746,7 +748,7 @@ describe("useEditController", () => {
 		const onSuccess = vi.fn();
 		const onSuccessSave = vi.fn();
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -771,7 +773,7 @@ describe("useEditController", () => {
 			</CoreContext>,
 		);
 		await act(async () =>
-			saveCallback(
+			saveCallback?.(
 				{ foo: "bar" },
 				{
 					onSuccess: onSuccessSave,
@@ -785,13 +787,13 @@ describe("useEditController", () => {
 
 	it("should execute error side effects on error in pessimistic mode", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = {
 			getOne: () => Promise.resolve({ data: { id: 12 } }),
 			update: () => Promise.reject({ message: "not good" }),
 		} as unknown as DataProvider;
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -811,7 +813,7 @@ describe("useEditController", () => {
 				</EditController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		expect(notificationsSpy).toEqual([
 			{
@@ -824,13 +826,13 @@ describe("useEditController", () => {
 
 	it("should use the default error message in case no message was provided", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = {
 			getOne: () => Promise.resolve({ data: { id: 12 } }),
 			update: () => Promise.reject({}),
 		} as unknown as DataProvider;
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -850,7 +852,7 @@ describe("useEditController", () => {
 				</EditController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		expect(notificationsSpy).toEqual([
 			{
@@ -863,13 +865,13 @@ describe("useEditController", () => {
 
 	it("should not trigger a notification in case of a validation error (handled by useNotifyIsFormInvalid)", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = {
 			getOne: () => Promise.resolve({ data: { id: 12 } }),
 			update: () => Promise.reject({ body: { errors: { foo: "invalid" } } }),
 		} as unknown as DataProvider;
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -889,20 +891,20 @@ describe("useEditController", () => {
 				</EditController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		expect(notificationsSpy).toEqual([]);
 	});
 
 	it("should trigger a notification even in case of a validation error in optimistic mode", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = {
 			getOne: () => Promise.resolve({ data: { id: 12 } }),
 			update: () => Promise.reject({ body: { errors: { foo: "invalid" } } }),
 		} as unknown as DataProvider;
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -922,7 +924,7 @@ describe("useEditController", () => {
 				</EditController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		expect(notificationsSpy).toContainEqual({
 			message: "ra.notification.http_error",
@@ -933,13 +935,13 @@ describe("useEditController", () => {
 
 	it("should trigger a notification even in case of a validation error in undoable mode", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = {
 			getOne: () => Promise.resolve({ data: { id: 12 } }),
 			update: () => Promise.reject({ body: { errors: { foo: "invalid" } } }),
 		} as unknown as DataProvider;
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -959,7 +961,7 @@ describe("useEditController", () => {
 				</EditController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		await new Promise((resolve) => setTimeout(resolve, 10));
 		screen.getByLabelText("confirm").click();
 		await new Promise((resolve) => setTimeout(resolve, 10));
@@ -972,7 +974,7 @@ describe("useEditController", () => {
 
 	it("should allow the save onError option to override the failure side effects override", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		const dataProvider = {
 			getOne: () => Promise.resolve({ data: { id: 12 } }),
 			update: () => Promise.reject({ message: "not good" }),
@@ -980,7 +982,7 @@ describe("useEditController", () => {
 		const onError = vi.fn();
 		const onErrorSave = vi.fn();
 
-		let notificationsSpy;
+		let notificationsSpy: NotificationPayload[] | undefined;
 		const Notification = () => {
 			const { notifications } = useNotificationContext();
 			React.useEffect(() => {
@@ -1005,7 +1007,7 @@ describe("useEditController", () => {
 			</CoreContext>,
 		);
 		await act(async () =>
-			saveCallback(
+			saveCallback?.(
 				{ foo: "bar" },
 				{
 					onError: onErrorSave,
@@ -1018,8 +1020,8 @@ describe("useEditController", () => {
 	});
 
 	it("should allow transform to transform the data before save", async () => {
-		let saveCallback;
-		const update = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const update = vi
 			.fn()
 			.mockImplementationOnce((_, { id, data }) =>
 				Promise.resolve({ data: { id, ...data } }),
@@ -1046,7 +1048,7 @@ describe("useEditController", () => {
 				</EditController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 		expect(transform).toHaveBeenCalledWith(
 			{ foo: "bar" },
 			{ previousData: undefined },
@@ -1060,8 +1062,8 @@ describe("useEditController", () => {
 	});
 
 	it("should allow the save transform option to override the transform side effect", async () => {
-		let saveCallback;
-		const update = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const update = vi
 			.fn()
 			.mockImplementationOnce((_, { id, data }) =>
 				Promise.resolve({ data: { id, ...data } }),
@@ -1090,7 +1092,7 @@ describe("useEditController", () => {
 			</CoreContext>,
 		);
 		await act(async () =>
-			saveCallback(
+			saveCallback?.(
 				{ foo: "bar" },
 				{
 					transform: transformSave,
@@ -1110,8 +1112,8 @@ describe("useEditController", () => {
 	});
 
 	it("should allow to register middlewares", async () => {
-		let saveCallback;
-		const update = jest
+		let saveCallback: SaveHandler<any> | undefined;
+		const update = vi
 			.fn()
 			.mockImplementationOnce((_, { id, data }) =>
 				Promise.resolve({ data: { id, ...data } }),
@@ -1160,7 +1162,7 @@ describe("useEditController", () => {
 				</EditController>
 			</CoreContext>,
 		);
-		await act(async () => saveCallback({ foo: "bar" }));
+		await act(async () => saveCallback?.({ foo: "bar" }));
 
 		await waitFor(() => {
 			expect(update).toHaveBeenCalledWith("posts", {
@@ -1190,7 +1192,7 @@ describe("useEditController", () => {
 			getOne: () => Promise.resolve({ data: post }),
 			update,
 		} as unknown as DataProvider;
-		let saveCallback;
+		let saveCallback: SaveHandler<any> | undefined;
 		render(
 			<CoreContext dataProvider={dataProvider}>
 				<EditController {...defaultProps} mutationMode="pessimistic">
@@ -1204,7 +1206,7 @@ describe("useEditController", () => {
 		await screen.findByText('{"id":12}');
 		let errors;
 		await act(async () => {
-			errors = await saveCallback({ foo: "bar" });
+			errors = await saveCallback?.({ foo: "bar" });
 		});
 		expect(errors).toEqual({ foo: "invalid" });
 		screen.getByText('{"id":12}');
@@ -1273,7 +1275,7 @@ describe("useEditController", () => {
 
 	describe("security", () => {
 		it("should not call the dataProvider until the authentication check passes", async () => {
-			let resolveAuthCheck: () => void;
+			let resolveAuthCheck: (_value: any) => void;
 			const authProvider: AuthProvider = {
 				checkAuth: vi.fn(
 					() =>

@@ -1,4 +1,4 @@
-import { testDataProvider } from "@runes/core";
+import { type AuthProvider, testDataProvider } from "@runes/core";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -12,7 +12,6 @@ import {
 describe("CreateBase", () => {
 	it("should give access to the save function", async () => {
 		const dataProvider = testDataProvider({
-			// @ts-expect-error
 			create: vi.fn((_, { data }) =>
 				Promise.resolve({ data: { id: 1, ...data } }),
 			),
@@ -30,7 +29,6 @@ describe("CreateBase", () => {
 
 	it("should allow to override the onSuccess function", async () => {
 		const dataProvider = testDataProvider({
-			// @ts-expect-error
 			create: vi.fn((_, { data }) =>
 				Promise.resolve({ data: { id: 1, ...data } }),
 			),
@@ -61,7 +59,6 @@ describe("CreateBase", () => {
 
 	it("should allow to override the onSuccess function at call time", async () => {
 		const dataProvider = testDataProvider({
-			// @ts-expect-error
 			create: vi.fn((_, { data }) =>
 				Promise.resolve({ data: { id: 1, ...data } }),
 			),
@@ -96,7 +93,6 @@ describe("CreateBase", () => {
 	it("should allow to override the onError function", async () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
 		const dataProvider = testDataProvider({
-			// @ts-expect-error
 			create: vi.fn(() => Promise.reject({ message: "test" })),
 		});
 		const onError = vi.fn();
@@ -122,7 +118,6 @@ describe("CreateBase", () => {
 
 	it("should allow to override the onError function at call time", async () => {
 		const dataProvider = testDataProvider({
-			// @ts-expect-error
 			create: vi.fn(() => Promise.reject({ message: "test" })),
 		});
 		const onError = vi.fn();
@@ -151,14 +146,11 @@ describe("CreateBase", () => {
 
 	it("should allow to override the transform function", async () => {
 		const dataProvider = testDataProvider({
-			// @ts-expect-error
 			create: vi.fn((_, { data }) =>
 				Promise.resolve({ data: { id: 1, ...data } }),
 			),
 		});
-		const transform = jest
-			.fn()
-			.mockReturnValueOnce({ test: "test transformed" });
+		const transform = vi.fn().mockReturnValueOnce({ test: "test transformed" });
 
 		render(
 			<NoAuthProvider dataProvider={dataProvider} transform={transform} />,
@@ -178,13 +170,12 @@ describe("CreateBase", () => {
 
 	it("should allow to override the transform function at call time", async () => {
 		const dataProvider = testDataProvider({
-			// @ts-expect-error
 			create: vi.fn((_, { data }) =>
 				Promise.resolve({ data: { id: 1, ...data } }),
 			),
 		});
 		const transform = vi.fn();
-		const transformOverride = jest
+		const transformOverride = vi
 			.fn()
 			.mockReturnValueOnce({ test: "test transformed" });
 
@@ -218,7 +209,7 @@ describe("CreateBase", () => {
 	});
 	it("should wait for the authentication resolution before showing the view", async () => {
 		let resolveAuth: () => void;
-		const authProvider = {
+		const authProvider: AuthProvider = {
 			login: () => Promise.resolve(),
 			logout: () => Promise.resolve(),
 			checkError: () => Promise.resolve(),
@@ -286,7 +277,6 @@ describe("CreateBase", () => {
 
 	it("should allow render props", async () => {
 		const dataProvider = testDataProvider({
-			// @ts-expect-error
 			create: vi.fn((_, { data }) =>
 				Promise.resolve({ data: { id: 1, ...data } }),
 			),

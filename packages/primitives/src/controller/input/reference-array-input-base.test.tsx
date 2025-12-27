@@ -3,7 +3,11 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { testDataProvider } from "ra-core";
 import * as React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Basic, Offline, WithError } from "./reference-array-input-base.stories";
+import {
+	Basic,
+	Offline,
+	WithError,
+} from "./reference-array-input-base.stories";
 
 describe("<ReferenceArrayInputBase>", () => {
 	beforeEach(() => {

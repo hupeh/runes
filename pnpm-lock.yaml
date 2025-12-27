@@ -139,6 +139,43 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@types/node@20.19.27)(jiti@2.6.1)(jsdom@27.3.0)(yaml@2.8.2)
 
+  packages/data-fakerest:
+    dependencies:
+      '@runes/core':
+        specifier: workspace:*
+        version: link:../core
+      fakerest:
+        specifier: ^4.2.0
+        version: 4.2.0
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.3.10
+        version: 2.3.10
+      '@runes/biome-config':
+        specifier: workspace:*
+        version: link:../../internal/biome-config
+      '@runes/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript-config
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.27
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.7
+      jiti:
+        specifier: ^2.4.2
+        version: 2.6.1
+      jsdom:
+        specifier: ^27.3.0
+        version: 27.3.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@types/node@20.19.27)(jiti@2.6.1)(jsdom@27.3.0)(yaml@2.8.2)
+
   packages/i18n:
     devDependencies:
       '@biomejs/biome':
@@ -189,6 +226,83 @@ importers:
       vitest:
         specifier: ^4.0.16
         version: 4.0.16(@types/node@20.19.27)(jiti@2.6.1)(jsdom@27.3.0)(yaml@2.8.2)
+
+  packages/i18n-polyglot:
+    dependencies:
+      '@runes/core':
+        specifier: workspace:*
+        version: link:../core
+      node-polyglot:
+        specifier: ^2.6.0
+        version: 2.6.0
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.3.10
+        version: 2.3.10
+      '@runes/biome-config':
+        specifier: workspace:*
+        version: link:../../internal/biome-config
+      '@runes/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript-config
+      '@testing-library/jest-dom':
+        specifier: ^6.6.3
+        version: 6.9.1
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.1(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.27
+      '@types/node-polyglot':
+        specifier: ^2.5.0
+        version: 2.5.0
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.7
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.7.0(vite@7.3.0(@types/node@20.19.27)(jiti@2.6.1)(yaml@2.8.2))
+      babel-plugin-react-compiler:
+        specifier: ^1.0.0
+        version: 1.0.0
+      jiti:
+        specifier: ^2.4.2
+        version: 2.6.1
+      jsdom:
+        specifier: ^27.3.0
+        version: 27.3.0
+      react:
+        specifier: ^19.0.2
+        version: 19.2.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.16
+        version: 4.0.16(@types/node@20.19.27)(jiti@2.6.1)(jsdom@27.3.0)(yaml@2.8.2)
+
+  packages/languages:
+    dependencies:
+      '@runes/core':
+        specifier: workspace:*
+        version: link:../core
+      react:
+        specifier: ^19.0.0
+        version: 19.2.3
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ^2.3.10
+        version: 2.3.10
+      '@runes/biome-config':
+        specifier: workspace:*
+        version: link:../../internal/biome-config
+      '@runes/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript-config
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
 
   packages/misc:
     dependencies:
@@ -287,6 +401,15 @@ importers:
       '@runes/biome-config':
         specifier: workspace:*
         version: link:../../internal/biome-config
+      '@runes/data-fakerest':
+        specifier: workspace:*
+        version: link:../data-fakerest
+      '@runes/i18n-polyglot':
+        specifier: workspace:*
+        version: link:../i18n-polyglot
+      '@runes/languages':
+        specifier: workspace:*
+        version: link:../languages
       '@runes/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript-config
@@ -1274,6 +1397,9 @@ packages:
   expect-type@1.3.0:
     resolution: {integrity: sha512-knvyeauYhqjOYvQ66MznSMs83wmHrCycNEN6Ao+2AeYEfxUIkuiVxdEa1qlGEPK+We3n0THiDciYSsCcgW/DoA==}
     engines: {node: '>=12.0.0'}
+
+  fakerest@4.2.0:
+    resolution: {integrity: sha512-qJtQO0r2iirV20XTqGrYDnueb4xEreOZISRWL5u8iFDCHELVl6AElaqn6z4z+/88bI0Hia357K6YTzTVwHFLjQ==}
 
   fast-equals@5.4.0:
     resolution: {integrity: sha512-jt2DW/aNFNwke7AUd+Z+e6pz39KO5rzdbbFCg2sGafS4mk13MI7Z8O5z9cADNn5lhGODIgLwug6TZO2ctf7kcw==}
@@ -2791,6 +2917,10 @@ snapshots:
   eventemitter3@5.0.1: {}
 
   expect-type@1.3.0: {}
+
+  fakerest@4.2.0:
+    dependencies:
+      lodash: 4.17.21
 
   fast-equals@5.4.0: {}
 

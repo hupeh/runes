@@ -10,7 +10,8 @@ import {
 	useResourceContext,
 	useTranslate,
 } from "@runes/core";
-import { useCallback, useMemo } from "react";
+import { useEvent } from "@runes/misc";
+import { useMemo } from "react";
 import { useUnselect } from "../list/use-unselect";
 
 /**
@@ -73,7 +74,7 @@ export const useDeleteController = <
 		successMessage,
 	} = props;
 	const { meta: mutationMeta, ...otherMutationOptions } = mutationOptions;
-	const record = useDataContext(props);
+	const record = useDataContext<RecordType>(props);
 	const resource = useResourceContext(props);
 	const notify = useNotify();
 	const unselect = useUnselect(resource);
@@ -99,7 +100,7 @@ export const useDeleteController = <
 					},
 				);
 				record && unselect([record.id], true);
-				redirect(redirectTo, resource);
+				redirect(redirectTo, { params: { resource } });
 			},
 			onError: (error: any) => {
 				notify(
@@ -117,7 +118,7 @@ export const useDeleteController = <
 		},
 	);
 
-	const handleDelete = useCallback(() => {
+	const handleDelete = useEvent(() => {
 		if (!record) {
 			throw new Error(
 				"The record cannot be deleted because no record has been passed",
@@ -135,14 +136,7 @@ export const useDeleteController = <
 				...otherMutationOptions,
 			},
 		);
-	}, [
-		deleteOne,
-		mutationMeta,
-		mutationMode,
-		otherMutationOptions,
-		record,
-		resource,
-	]);
+	});
 
 	return useMemo(
 		() => ({

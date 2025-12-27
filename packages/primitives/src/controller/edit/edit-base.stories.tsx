@@ -4,17 +4,20 @@ import {
 	type Data,
 	type DataProvider,
 	type GetOneResult,
+	IsOffline,
 	type MutationMode,
+	useLocaleState,
+	WithRecord,
 } from "@runes/core";
+import fakeRestDataProvider from "@runes/data-fakerest";
 import { type I18nProvider, mergeTranslations } from "@runes/i18n";
+import polyglotI18nProvider from "@runes/i18n-polyglot";
+import { englishMessages, frenchMessages } from "@runes/languages";
 import { onlineManager, useMutationState } from "@tanstack/react-query";
-import fakeRestDataProvider from "ra-data-fakerest";
-import polyglotI18nProvider from "ra-i18n-polyglot";
-import englishMessages from "ra-language-english";
-import frenchMessages from "ra-language-french";
 import { useEffect } from "react";
 import { type SaveHandlerCallbacks, useSaveContext } from "../save-context";
 import { EditBase, type EditBaseProps } from "./edit-base";
+import { useEditContext } from "./use-edit-context";
 
 export default {
 	title: "ra-core/controller/EditBase",
@@ -180,7 +183,7 @@ export const WithRenderProps = ({
 
 export const Loading = () => {
 	let resolveGetOne: (() => void) | null = null;
-	const dataProvider = {
+	const dataProvider: DataProvider = {
 		...defaultDataProvider,
 		getOne: (resource, params) => {
 			return new Promise<GetOneResult<Data>>((resolve) => {
@@ -209,7 +212,7 @@ export const Loading = () => {
 
 export const FetchError = () => {
 	let rejectGetOne: (() => void) | null = null;
-	const dataProvider = {
+	const dataProvider: DataProvider = {
 		...defaultDataProvider,
 		getOne: () => {
 			return new Promise<GetOneResult<Data>>((_, reject) => {
@@ -237,7 +240,7 @@ export const FetchError = () => {
 
 export const RedirectOnError = () => {
 	let rejectGetOne: (() => void) | null = null;
-	const dataProvider = {
+	const dataProvider: DataProvider = {
 		...defaultDataProvider,
 		getOne: () => {
 			return new Promise<GetOneResult<Data>>((_, reject) => {
@@ -370,7 +373,9 @@ const OfflineChild = ({
 				</p>
 			</IsOffline>
 			<WithRecord render={(record) => <p>{record?.test}</p>} />
-			<button onClick={handleClick}>{saving ? "Saving..." : "Save"}</button>
+			<button type="button" onClick={handleClick}>
+				{saving ? "Saving..." : "Save"}
+			</button>
 			<MutationsState />
 		</>
 	);
@@ -403,8 +408,12 @@ const Title = () => {
 				{defaultTitle} ({locale})
 			</strong>
 			<div>
-				<button onClick={() => setLocale("en")}>EN</button>
-				<button onClick={() => setLocale("fr")}>FR</button>
+				<button type="button" onClick={() => setLocale("en")}>
+					EN
+				</button>
+				<button type="button" onClick={() => setLocale("fr")}>
+					FR
+				</button>
 			</div>
 		</div>
 	);

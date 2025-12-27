@@ -1,11 +1,6 @@
 import { onlineManager } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import * as React from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { CoreAdminContext } from "../../core/CoreAdminContext";
-import { useResourceContext } from "../../core/useResourceContext";
-import { testDataProvider } from "../../dataProvider";
-import { RecordContextProvider } from "../record";
 import { ReferenceFieldBase } from "./reference-field-base";
 import {
 	Basic,

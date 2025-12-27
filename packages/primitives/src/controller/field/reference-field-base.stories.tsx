@@ -1,14 +1,6 @@
+import fakeRestDataProvider from "@runes/data-fakerest";
 import { onlineManager, QueryClient } from "@tanstack/react-query";
-import fakeRestDataProvider from "ra-data-fakerest";
 import * as React from "react";
-import { IsOffline } from "../..";
-import { ShowBase } from "../../controller/show/show-base";
-import { CoreAdmin } from "../../core/CoreAdmin";
-import { Resource } from "../../core/Resource";
-import { useIsOffline } from "../../core/useIsOffline";
-import { TestMemoryRouter } from "../../routing";
-import type { DataProvider } from "../../types";
-import { useFieldValue } from "../../util/useFieldValue";
 import { ReferenceFieldBase } from "./reference-field-base";
 import { useReferenceFieldContext } from "./reference-field-context";
 

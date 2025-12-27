@@ -4,8 +4,8 @@ import {
 	type DataProvider,
 	useAuthState,
 } from "@runes/core";
+import fakeDataProvider from "@runes/data-fakerest";
 import { QueryClient } from "@tanstack/react-query";
-import fakeDataProvider from "ra-data-fakerest";
 import { Link } from "react-router";
 import {
 	type EditControllerProps,

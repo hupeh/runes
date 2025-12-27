@@ -14,9 +14,8 @@ export type UseCanAccessParams = {
 	[key: string]: any;
 };
 
-export type UseCanAccessOptions<ErrorType extends Error = Error> =
-	UseCanAccessParams &
-		Omit<UseQueryOptions<boolean, ErrorType>, "queryKey" | "queryFn">;
+export type UseCanAccessOptions<ErrorType = Error> = UseCanAccessParams &
+	Omit<UseQueryOptions<boolean, ErrorType>, "queryKey" | "queryFn">;
 
 export type UseCanAccessResult<ErrorType = Error> =
 	| UseCanAccessLoadingResult<ErrorType>
@@ -90,7 +89,7 @@ export interface UseCanAccessSuccessResult<ErrorType>
  * };
  * ```
  */
-export function useCanAccess<ErrorType extends Error = Error>(
+export function useCanAccess<ErrorType = Error>(
 	params: UseCanAccessOptions<ErrorType>,
 ): UseCanAccessResult<ErrorType> {
 	const authProvider = useAuthContext();

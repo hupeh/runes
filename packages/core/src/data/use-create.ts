@@ -241,7 +241,7 @@ export const useCreate = <
 /**
  * useCreate mutation 的参数类型
  */
-export interface UseCreateMutateParams<DataType extends Omit<DataType, "id">> {
+export interface UseCreateMutateParams<DataType extends Data> {
 	/** 资源名称 */
 	resource?: string;
 	/** 要创建的数据（不含 id） */
@@ -267,7 +267,7 @@ export type UseCreateOptions<
 		ResultType,
 		MutationErrorType,
 		Partial<UseCreateMutateParams<DataType>>,
-		OnMutateResult
+		OnMutateResult | undefined
 	>,
 	"mutationFn"
 > & {
@@ -300,7 +300,7 @@ export type CreateMutationFunction<
 		ResultType,
 		MutationErrorType,
 		Partial<UseCreateMutateParams<DataType>>,
-		OnMutateResult
+		OnMutateResult | undefined
 	> & { mutationMode?: MutationMode; returnPromise?: ReturnPromiseType },
 ) => Promise<ReturnPromiseType extends true ? ResultType : void>;
 
@@ -325,6 +325,6 @@ export type UseCreateResult<
 		ResultType,
 		MutationErrorType,
 		Partial<UseCreateMutateParams<DataType>>,
-		OnMutateResult
+		OnMutateResult | undefined
 	> & { isLoading: boolean },
 ];

@@ -4,10 +4,6 @@ import {
 	QueryClientProvider,
 } from "@tanstack/react-query";
 import * as React from "react";
-import { ResourceContextProvider, useIsOffline } from "../../core";
-import { DataProviderContext } from "../../dataProvider";
-import { TestMemoryRouter } from "../../routing";
-import { RecordContextProvider } from "../record";
 import { ReferenceManyCountBase } from "./reference-many-count-base";
 
 export default {

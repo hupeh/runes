@@ -12,7 +12,7 @@ import { useDeleteController } from "./use-delete-controller";
 describe("useDeleteController", () => {
 	it("should get the record and the resource from closest context providers", async () => {
 		const dataProvider = testDataProvider({
-			delete: vi.fn((ressource, params) => {
+			delete: vi.fn((_resource, params) => {
 				return Promise.resolve({ data: params?.previousData });
 			}),
 		});
@@ -57,7 +57,7 @@ describe("useDeleteController", () => {
 	});
 	it("should allow to override the record and the resource from closest context providers", async () => {
 		const dataProvider = testDataProvider({
-			delete: vi.fn((ressource, params) => {
+			delete: vi.fn((_resource, params) => {
 				return Promise.resolve({ data: params?.previousData });
 			}),
 		});
@@ -76,22 +76,20 @@ describe("useDeleteController", () => {
 		};
 
 		render(
-			<TestMemoryRouter>
-				<CoreAdminContext dataProvider={dataProvider}>
-					<Routes>
-						<Route
-							path="/"
-							element={
-								<ResourceContextProvider value="posts">
-									<RecordContextProvider value={{ id: 1 }}>
-										<MockComponent />
-									</RecordContextProvider>
-								</ResourceContextProvider>
-							}
-						/>
-					</Routes>
-				</CoreAdminContext>
-			</TestMemoryRouter>,
+			<CoreContext dataProvider={dataProvider}>
+				<Routes>
+					<Route
+						path="/"
+						element={
+							<ResourceContextProvider value="posts">
+								<DataContextProvider value={{ id: 1 }}>
+									<MockComponent />
+								</DataContextProvider>
+							</ResourceContextProvider>
+						}
+					/>
+				</Routes>
+			</CoreContext>,
 		);
 
 		const button = await screen.findByText("Delete");

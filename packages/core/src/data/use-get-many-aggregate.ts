@@ -5,7 +5,8 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
-import type { Data, DataProvider, GetManyParams, Identifier } from "./types";
+import type { Data, Identifier } from "../types";
+import type { DataProvider, GetManyParams } from "./types";
 import { useDataProvider } from "./use-data-provider";
 import type { UseGetManyHookValue } from "./use-get-many";
 
@@ -30,16 +31,14 @@ import type { UseGetManyHookValue } from "./use-get-many";
  * dataProvider.getMany('tags', [1, 2, 3, 4])
  *
  * @param resource 资源名称，例如 'posts'
- * @param {Params} params getMany 参数 { ids, meta }
- * @param {Object} options 传递给 dataProvider 的选项对象
- * @param {boolean} options.enabled 条件运行查询的标志。如果为 false，查询将不会运行
- * @param {Function} options.onSuccess 成功时执行的副作用函数，例如 { onSuccess: { refresh: true } }
- * @param {Function} options.onError 失败时执行的副作用函数，例如 { onError: error => notify(error.message) }
+ * @param params getMany 参数，包含：
+ * - ids: 要获取的 ID 数组，例如 [123, 456, 789]
+ * - meta: 可选的元数据参数
+ * @param options 传递给 dataProvider 的选项对象，包含：
+ * - enabled: 条件运行查询的标志。如果为 false，查询将不会运行
+ * - onSuccess: 成功时执行的副作用函数，例如 { onSuccess: { refresh: true } }
+ * - onError: 失败时执行的副作用函数，例如 { onError: error => notify(error.message) }
  *
- * @typedef Params
- * @prop params.ids 要获取的 ID 数组，例如 [123, 456, 789]
- * @prop params.meta 可选的元数据参数
-
  * @returns 当前请求状态。解构为 { data, error, isPending, isFetching, refetch }
  *
  * @example
@@ -76,25 +75,21 @@ import type { UseGetManyHookValue } from "./use-get-many";
  * // 实际只会发起一次请求: getMany('tags', { ids: [1, 2, 3, 4, 5] })
  */
 export const useGetManyAggregate = <
-	IdentifierType extends Identifier,
-	RecordType extends Data<IdentifierType> = Data<IdentifierType>,
+	DataType extends Data = any,
 	ErrorType = Error,
 >(
 	resource: string,
-	params: Partial<GetManyParams<RecordType>>,
-	options: UseGetManyAggregateOptions<RecordType, ErrorType> = {},
-): UseGetManyHookValue<RecordType, ErrorType> => {
+	params: Partial<GetManyParams<DataType>>,
+	options: UseGetManyAggregateOptions<DataType, ErrorType> = {},
+): UseGetManyHookValue<DataType, ErrorType> => {
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { onError, onSuccess, onSettled, enabled, ...queryOptions } = options;
-	// const onSuccessEvent = useEvent(onSuccess);
-	// const onErrorEvent = useEvent(onError);
-	// const onSettledEvent = useEvent(onSettled);
 
 	const { ids, meta } = params;
 	const placeholderData = useMemo(() => {
 		const records = (Array.isArray(ids) ? ids : [ids]).map((id) =>
-			queryClient.getQueryData<RecordType>([
+			queryClient.getQueryData<DataType>([
 				resource,
 				"getOne",
 				{ id: String(id), meta },
@@ -103,11 +98,11 @@ export const useGetManyAggregate = <
 		if (records.some((record) => record === undefined)) {
 			return undefined;
 		} else {
-			return records as RecordType[];
+			return records as DataType[];
 		}
 	}, [ids, queryClient, resource, meta]);
 
-	const result = useQuery<RecordType[], ErrorType, RecordType[]>({
+	const result = useQuery<DataType[], ErrorType, DataType[]>({
 		queryKey: [
 			resource,
 			"getMany",
@@ -351,14 +346,17 @@ const callGetManyQueries = batch((calls: GetManyCallArgs[]) => {
 						meta: uniqueMeta,
 					},
 				],
-				queryFn: (queryParams) =>
-					dataProvider
-						?.getMany<any>(uniqueResource, {
-							ids: aggregatedIds,
-							meta: uniqueMeta,
-							signal: queryParams.signal,
-						})
-						.then(({ data }) => data),
+				queryFn: async (queryParams) => {
+					if (!dataProvider) {
+						return Promise.reject(new Error("dataProvider is not available"));
+					}
+					const { data } = await dataProvider.getMany<any>(uniqueResource!, {
+						ids: aggregatedIds,
+						meta: uniqueMeta,
+						signal: queryParams.signal,
+					});
+					return data;
+				},
 			})
 			.then((data) => {
 				callsForResource?.forEach(({ ids, resolve }) => {
@@ -383,14 +381,14 @@ const callGetManyQueries = batch((calls: GetManyCallArgs[]) => {
 /**
  * useGetManyAggregate hook 的选项类型
  */
-export type UseGetManyAggregateOptions<
-	RecordType extends Data,
-	ErrorType = Error,
-> = Omit<UseQueryOptions<RecordType[], ErrorType>, "queryKey" | "queryFn"> & {
+export type UseGetManyAggregateOptions<DataType extends Data, ErrorType> = Omit<
+	UseQueryOptions<DataType[], ErrorType>,
+	"queryKey" | "queryFn"
+> & {
 	/** 成功时的回调函数 */
-	onSuccess?: (data: RecordType[]) => void;
+	onSuccess?: (data: DataType[]) => void;
 	/** 失败时的回调函数 */
 	onError?: (error: ErrorType) => void;
 	/** 完成时的回调函数（无论成功或失败） */
-	onSettled?: (data?: RecordType[], error?: ErrorType | null) => void;
+	onSettled?: (data?: DataType[], error?: ErrorType | null) => void;
 };

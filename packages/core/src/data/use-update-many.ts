@@ -6,12 +6,11 @@ import {
 	type UseMutationResult,
 	useQueryClient,
 } from "@tanstack/react-query";
+import type { Data } from "../types";
 import type {
 	GetInfiniteListResult,
-	InferDataType,
 	MutationMode,
 	GetListResult as OriginalGetListResult,
-	Resource,
 	UpdateManyParams,
 	UpdateManyResult,
 } from "./types";
@@ -24,16 +23,14 @@ import {
 /**
  * 获取一个调用 dataProvider.updateMany() 方法的回调函数，以及返回结果和加载状态
  *
- * @param {string} resource 资源名称
- * @param {Params} params updateMany 参数 { ids, data, meta }
- * @param {Object} options 传递给 queryClient 的选项对象
+ * @param resource 资源名称
+ * @param params updateMany 参数，包含：
+ * - ids: 资源标识符数组，例如 [123, 456]
+ * - data: 要合并到记录中的更新数据，例如 { views: 10 }
+ * - meta: 可选的元数据参数
+ * @param options 传递给 queryClient 的选项对象
  * 可以包含在成功或失败时执行的副作用，例如 { onSuccess: () => { refresh(); } }
  * 可以包含 mutation 模式（optimistic/pessimistic/undoable），例如 { mutationMode: 'undoable' }
- *
- * @typedef Params
- * @prop params.ids 资源标识符数组，例如 [123, 456]
- * @prop params.data 要合并到记录中的更新数据，例如 { views: 10 }
- * @prop params.meta 可选的元数据参数
  *
  * @returns 当前的 mutation 状态。解构为 [updateMany, { data, error, isPending }]
  *
@@ -102,14 +99,13 @@ import {
  * };
  */
 export function useUpdateMany<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	MutationError = unknown,
+	DataType extends Data = any,
+	MutationErrorType = unknown,
 >(
-	resource?: ResourceType,
-	params: Partial<UpdateManyParams<RecordType>> = {},
-	options: UseUpdateManyOptions<ResourceType, RecordType, MutationError> = {},
-): UseUpdateManyResult<ResourceType, RecordType, boolean, MutationError> {
+	resource?: string,
+	params: Partial<UpdateManyParams<DataType>> = {},
+	options: UseUpdateManyOptions<DataType, MutationErrorType> = {},
+): UseUpdateManyResult<DataType, boolean, MutationErrorType> {
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const {
@@ -119,16 +115,16 @@ export function useUpdateMany<
 	} = options;
 
 	const dataProviderUpdateMany = (
-		resource: ResourceType,
-		params: UpdateManyParams<RecordType>,
+		resource: string,
+		params: UpdateManyParams<DataType>,
 	) => {
-		return dataProvider.updateMany<ResourceType, RecordType>(resource, params);
+		return dataProvider.updateMany<DataType>(resource, params);
 	};
 
 	const [mutate, mutationResult] = useMutationWithMutationMode<
-		MutationError,
-		UpdateManyResult<RecordType>,
-		UseUpdateManyMutateParams<ResourceType, RecordType>
+		MutationErrorType,
+		UpdateManyResult<DataType>,
+		UseUpdateManyMutateParams<DataType>
 	>(
 		{ resource, ...params },
 		{
@@ -149,7 +145,7 @@ export function useUpdateMany<
 				}
 				return dataProviderUpdateMany(
 					resource,
-					params as UpdateManyParams<RecordType>,
+					params as UpdateManyParams<DataType>,
 				);
 			},
 			updateCache: ({ resource, ...params }, { mutationMode }) => {
@@ -164,7 +160,7 @@ export function useUpdateMany<
 					? JSON.parse(JSON.stringify(params?.data))
 					: undefined;
 
-				const updateColl = (old: RecordType[]) => {
+				const updateColl = (old: DataType[]) => {
 					if (!old) return old;
 					let newCollection = [...old];
 					(params?.ids ?? []).forEach((id) => {
@@ -185,14 +181,14 @@ export function useUpdateMany<
 					return newCollection;
 				};
 
-				type GetListResult = Omit<OriginalGetListResult<RecordType>, "data"> & {
-					data?: RecordType[];
+				type GetListResult = Omit<OriginalGetListResult<DataType>, "data"> & {
+					data?: DataType[];
 				};
 
 				(params?.ids ?? []).forEach((id) => {
 					queryClient.setQueryData(
 						[resource, "getOne", { id: String(id), meta: params?.meta }],
-						(record: RecordType) => ({
+						(record: DataType) => ({
 							...record,
 							...clonedData,
 						}),
@@ -209,7 +205,7 @@ export function useUpdateMany<
 					{ queryKey: [resource, "getInfiniteList"] },
 					(
 						res: UseInfiniteQueryResult<
-							InfiniteData<GetInfiniteListResult<RecordType>>
+							InfiniteData<GetInfiniteListResult<DataType>>
 						>["data"],
 					) =>
 						res?.pages
@@ -225,7 +221,7 @@ export function useUpdateMany<
 				);
 				queryClient.setQueriesData(
 					{ queryKey: [resource, "getMany"] },
-					(coll: RecordType[]) =>
+					(coll: DataType[]) =>
 						coll && coll.length > 0 ? updateColl(coll) : coll,
 					{ updatedAt },
 				);
@@ -259,7 +255,7 @@ export function useUpdateMany<
 						// This is necessary to avoid breaking changes in useUpdateMany:
 						// The mutation function must have the same signature as before (resource, params) and not ({ resource, params })
 						const { resource, ...params } = args as Required<
-							UseUpdateManyMutateParams<ResourceType, RecordType>
+							UseUpdateManyMutateParams<DataType>
 						>;
 						return mutateWithMiddlewares(resource, params);
 					};
@@ -271,12 +267,12 @@ export function useUpdateMany<
 	);
 
 	const updateMany = (
-		callTimeResource: ResourceType | undefined = resource,
-		callTimeParams: Partial<UpdateManyParams<RecordType>> = {},
+		callTimeResource: string | undefined = resource,
+		callTimeParams: Partial<UpdateManyParams<DataType>> = {},
 		callTimeOptions: MutateOptions<
-			Array<RecordType["id"]> | undefined,
-			MutationError,
-			Partial<UseUpdateManyMutateParams<ResourceType, RecordType>>,
+			Array<DataType["id"]> | undefined,
+			MutationErrorType,
+			Partial<UseUpdateManyMutateParams<DataType>>,
 			unknown
 		> & {
 			mutationMode?: MutationMode;
@@ -293,37 +289,30 @@ export function useUpdateMany<
 	};
 
 	return [updateMany, mutationResult] as UseUpdateManyResult<
-		ResourceType,
-		RecordType,
+		DataType,
 		boolean,
-		MutationError
+		MutationErrorType
 	>;
 }
 
 /**
  * useUpdateMany mutation 的参数类型
  */
-export interface UseUpdateManyMutateParams<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-> {
+export interface UseUpdateManyMutateParams<DataType extends Data> {
 	/** 资源名称 */
-	resource?: ResourceType;
+	resource?: string;
 	/** 要更新的记录 ID 数组 */
-	ids?: Array<RecordType["id"]>;
+	ids?: DataType["id"][];
 	/** 要更新的数据 */
-	data?: Partial<RecordType>;
+	data?: Partial<DataType>;
 	/** 更新前的数据（用于乐观更新回滚） */
 	previousData?: any;
 	/** 元数据 */
 	meta?: any;
 }
 
-type UpdateManyFunction<
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-> = (
-	resource: ResourceType,
+type UpdateManyFunction<DataType extends Data> = (
+	resource: string,
 	params: UpdateManyParams<DataType>,
 ) => Promise<UpdateManyResult<DataType>>;
 
@@ -331,14 +320,13 @@ type UpdateManyFunction<
  * useUpdateMany hook 的选项类型
  */
 export type UseUpdateManyOptions<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	MutationErrorType = unknown,
+	DataType extends Data,
+	MutationErrorType,
 > = Omit<
 	UseMutationOptions<
-		Array<RecordType["id"]> | undefined,
+		Array<DataType["id"]> | undefined,
 		MutationErrorType,
-		Partial<UseUpdateManyMutateParams<ResourceType, RecordType>>,
+		Partial<UseUpdateManyMutateParams<DataType>>,
 		OnMutateResult
 	>,
 	"mutationFn"
@@ -349,7 +337,7 @@ export type UseUpdateManyOptions<
 	returnPromise?: boolean;
 	/** 获取带中间件的 mutate 函数 */
 	getMutateWithMiddlewares?: <
-		UpdateFunctionType extends UpdateManyFunction<ResourceType, RecordType>,
+		UpdateFunctionType extends UpdateManyFunction<DataType>,
 	>(
 		mutate: UpdateFunctionType,
 	) => (
@@ -363,28 +351,27 @@ export type UseUpdateManyOptions<
  * @returns 元组 [updateMany 函数, mutation 结果对象]
  */
 export type UseUpdateManyResult<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
+	DataType extends Data = any,
 	ReturnPromiseType extends boolean = boolean,
 	MutationErrorType = unknown,
 > = [
 	(
-		resource?: ResourceType,
-		params?: Partial<UpdateManyParams<RecordType>>,
+		resource?: string,
+		params?: Partial<UpdateManyParams<DataType>>,
 		options?: MutateOptions<
-			Array<RecordType["id"]>,
+			DataType["id"][],
 			MutationErrorType,
-			Partial<UseUpdateManyMutateParams<ResourceType, RecordType>>,
+			Partial<UseUpdateManyMutateParams<DataType>>,
 			OnMutateResult
 		> & {
 			mutationMode?: MutationMode;
 			returnPromise?: ReturnPromiseType;
 		},
-	) => Promise<ReturnPromiseType extends true ? Array<RecordType["id"]> : void>,
+	) => Promise<ReturnPromiseType extends true ? DataType["id"][] : void>,
 	UseMutationResult<
-		Array<RecordType["id"]> | undefined,
+		DataType["id"][] | undefined,
 		MutationErrorType,
-		Partial<UpdateManyParams<RecordType> & { resource?: ResourceType }>,
+		Partial<UpdateManyParams<DataType> & { resource?: string }>,
 		OnMutateResult
 	> & { isLoading: boolean },
 ];

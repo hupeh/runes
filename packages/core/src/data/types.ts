@@ -1,27 +1,4 @@
-/** 标识符类型，可以是字符串或数字 */
-export type Identifier = string | number;
-
-/**
- * 数据记录基础接口
- * 所有数据记录都必须有一个 id 字段
- */
-export interface Data<IdentifierType extends Identifier = Identifier>
-	extends Record<string, any> {
-	/** 记录的唯一标识符 */
-	id: IdentifierType;
-}
-
-/** 资源类型，通常是资源名称字符串 */
-export type Resource<_DataType extends Data = Data> = string;
-
-/** 从资源类型推断数据类型 */
-export type InferDataType<R> = R extends Resource<infer D> ? D : never;
-
-/** 从资源类型推断标识符类型 */
-export type InferIdentifierType<R> =
-	R extends Resource<infer P> ? (P extends Data<infer U> ? U : never) : never;
-
-// ------
+import type { Data, Identifier } from "../types";
 
 /**
  * 排序参数
@@ -109,11 +86,8 @@ export interface GetInfiniteListResult<DataType extends Data>
  * getList 方法类型
  * 获取资源列表
  */
-export type GetList = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
->(
-	resource: ResourceType,
+export type GetList = <DataType extends Data = Data>(
+	resource: string,
 	params: GetListParams,
 ) => Promise<GetListResult<DataType>>;
 
@@ -146,11 +120,10 @@ export interface GetOneResult<DataType extends Data> {
  * 获取单条记录
  */
 export type GetOne = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
+	DataType extends Data = Data,
 	ResultType extends DataType = DataType,
 >(
-	resource: ResourceType,
+	resource: string,
 	params: GetOneParams<DataType>,
 ) => Promise<GetOneResult<ResultType>>;
 
@@ -182,11 +155,8 @@ export interface GetManyResult<DataType extends Data> {
  * getMany 方法类型
  * 根据 ID 数组获取多条记录
  */
-export type GetMany = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
->(
-	resource: ResourceType,
+export type GetMany = <DataType extends Data = Data>(
+	resource: string,
 	params: GetManyParams<DataType>,
 ) => Promise<GetManyResult<DataType>>;
 
@@ -240,11 +210,8 @@ export interface GetManyReferenceResult<DataType extends Data> {
  * getManyReference 方法类型
  * 获取通过外键关联的记录列表
  */
-export type GetManyReference = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
->(
-	resource: ResourceType,
+export type GetManyReference = <DataType extends Data = Data>(
+	resource: string,
 	params: GetManyReferenceParams,
 ) => Promise<GetManyReferenceResult<DataType>>;
 
@@ -278,11 +245,8 @@ export interface UpdateResult<DataType extends Data> {
  * update 方法类型
  * 更新单条记录
  */
-export type Update = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
->(
-	resource: ResourceType,
+export type Update = <DataType extends Data = Data>(
+	resource: string,
 	params: UpdateParams<DataType>,
 ) => Promise<UpdateResult<DataType>>;
 
@@ -314,11 +278,8 @@ export interface UpdateManyResult<DataType extends Data> {
  * updateMany 方法类型
  * 批量更新多条记录
  */
-export type UpdateMany = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
->(
-	resource: ResourceType,
+export type UpdateMany = <DataType extends Data = Data>(
+	resource: string,
 	params: UpdateManyParams<DataType>,
 ) => Promise<UpdateManyResult<DataType>>;
 
@@ -349,11 +310,10 @@ export interface CreateResult<DataType extends Data> {
  * 创建新记录
  */
 export type Create = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
+	DataType extends Data = Data,
 	ResultType extends DataType = DataType,
 >(
-	resource: ResourceType,
+	resource: string,
 	params: CreateParams<DataType>,
 ) => Promise<CreateResult<ResultType>>;
 
@@ -385,11 +345,8 @@ export interface DeleteResult<DataType extends Data> {
  * delete 方法类型
  * 删除单条记录
  */
-export type Delete = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
->(
-	resource: ResourceType,
+export type Delete = <DataType extends Data = Data>(
+	resource: string,
 	params: DeleteParams<DataType>,
 ) => Promise<DeleteResult<DataType>>;
 
@@ -419,11 +376,8 @@ export interface DeleteManyResult<DataType extends Data> {
  * deleteMany 方法类型
  * 批量删除多条记录
  */
-export type DeleteMany = <
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
->(
-	resource: ResourceType,
+export type DeleteMany = <DataType extends Data = Data>(
+	resource: string,
 	params: DeleteManyParams<DataType>,
 ) => Promise<DeleteManyResult<DataType>>;
 

@@ -5,7 +5,8 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import type { GetManyParams, InferDataType, Resource } from "./types";
+import type { Data } from "../types";
+import type { GetManyParams } from "./types";
 import { useDataProvider } from "./use-data-provider";
 
 /**
@@ -19,14 +20,12 @@ import { useDataProvider } from "./use-data-provider";
  *
  * 使用相同参数第二次调用此 hook 时，会返回缓存的结果，直到响应到达为止。
  *
- * @param {string} resource 资源名称，例如 'posts'
- * @param {Params} params getMany 参数 { ids, meta }
- * @param {Object} options 传递给 queryClient 的选项对象
+ * @param resource 资源名称，例如 'posts'
+ * @param params getMany 参数，包含：
+ * - ids: 要获取的 ID 数组，例如 [123, 456, 789]
+ * - meta: 可选的元数据参数
+ * @param options 传递给 queryClient 的选项对象
  * 可以包含在成功或失败时执行的副作用，例如 { onSuccess: () => { refresh(); } }
- *
- * @typedef Params
- * @prop params.ids 要获取的 ID 数组，例如 [123, 456, 789]
- * @prop params.meta 可选的元数据参数
  *
  * @returns 当前请求状态。解构为 { data, error, isPending, refetch }
  *
@@ -67,21 +66,17 @@ import { useDataProvider } from "./use-data-provider";
  *     );
  * };
  */
-export const useGetMany = <
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	ErrorType = Error,
->(
-	resource: ResourceType,
-	params: Partial<GetManyParams<RecordType>>,
-	options: UseGetManyOptions<RecordType, ErrorType> = {},
-): UseGetManyHookValue<RecordType, ErrorType> => {
+export const useGetMany = <DataType extends Data = any, ErrorType = Error>(
+	resource: string,
+	params: Partial<GetManyParams<DataType>>,
+	options: UseGetManyOptions<DataType, ErrorType> = {},
+): UseGetManyHookValue<DataType, ErrorType> => {
 	const { ids, meta } = params;
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { onError, onSuccess, onSettled, enabled, ...queryOptions } = options;
 
-	const result = useQuery<RecordType[], ErrorType, RecordType[]>({
+	const result = useQuery<DataType[], ErrorType, DataType[]>({
 		queryKey: [
 			resource,
 			"getMany",
@@ -95,14 +90,11 @@ export const useGetMany = <
 				// no need to call the dataProvider
 				return Promise.resolve([]);
 			}
-			const { data } = await dataProvider.getMany<ResourceType, RecordType>(
-				resource,
-				{
-					ids,
-					meta,
-					signal: queryParams.signal,
-				},
-			);
+			const { data } = await dataProvider.getMany<DataType>(resource, {
+				ids,
+				meta,
+				signal: queryParams.signal,
+			});
 			return data;
 		},
 		placeholderData: () => {
@@ -110,7 +102,7 @@ export const useGetMany = <
 				!ids || ids.length === 0
 					? []
 					: ids.map((id) =>
-							queryClient.getQueryData<RecordType>([
+							queryClient.getQueryData<DataType>([
 								resource,
 								"getOne",
 								{ id: String(id), meta },
@@ -119,7 +111,7 @@ export const useGetMany = <
 			if (records.some((record) => record === undefined)) {
 				return undefined;
 			} else {
-				return records as RecordType[];
+				return records as DataType[];
 			}
 		},
 		retry: false,
@@ -174,22 +166,22 @@ export const useGetMany = <
 /**
  * useGetMany hook 的选项类型
  */
-export type UseGetManyOptions<RecordType, ErrorType> = Omit<
-	UseQueryOptions<RecordType[], ErrorType>,
+export type UseGetManyOptions<DataType extends Data, ErrorType> = Omit<
+	UseQueryOptions<DataType[], ErrorType>,
 	"queryKey" | "queryFn"
 > & {
 	/** 成功时的回调函数 */
-	onSuccess?: (data: RecordType[]) => void;
+	onSuccess?: (data: DataType[]) => void;
 	/** 失败时的回调函数 */
 	onError?: (error: ErrorType) => void;
 	/** 完成时的回调函数（无论成功或失败） */
-	onSettled?: (data?: RecordType[], error?: ErrorType | null) => void;
+	onSettled?: (data?: DataType[], error?: ErrorType | null) => void;
 };
 
 /**
  * useGetMany hook 的返回值类型
  */
-export type UseGetManyHookValue<RecordType, ErrorType> = UseQueryResult<
-	RecordType[],
-	ErrorType
->;
+export type UseGetManyHookValue<
+	DataType extends Data,
+	ErrorType,
+> = UseQueryResult<DataType[], ErrorType>;

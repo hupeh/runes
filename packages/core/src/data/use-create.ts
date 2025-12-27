@@ -5,13 +5,8 @@ import {
 	type UseMutationResult,
 	useQueryClient,
 } from "@tanstack/react-query";
-import type {
-	CreateParams,
-	CreateResult,
-	InferDataType,
-	MutationMode,
-	Resource,
-} from "./types";
+import type { Data } from "../types";
+import type { CreateParams, CreateResult, MutationMode } from "./types";
 import { useDataProvider } from "./use-data-provider";
 import {
 	type OnMutateResult,
@@ -21,13 +16,10 @@ import {
 /**
  * 获取一个调用 dataProvider.create() 方法的回调函数，以及返回结果和加载状态
  *
- * @param {string} resource 资源名称
- * @param {Params} params 创建参数 { data }
- * @param {Object} options 传递给 queryClient 的选项对象
+ * @param resource 资源名称
+ * @param params 创建参数，包含 data（要创建的记录，例如 { title: 'hello, world' }）
+ * @param options 传递给 queryClient 的选项对象
  * 可以包含在成功或失败时执行的副作用，例如 { onSuccess: () => { refresh(); } }
- *
- * @typedef Params
- * @prop params.data 要创建的记录，例如 { title: 'hello, world' }
  *
  * @returns 当前的 mutation 状态。解构为 [create, { data, error, isPending }]
  *
@@ -96,26 +88,14 @@ import {
  * };
  */
 export const useCreate = <
-	ResourceType extends Resource = Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	MutationError = unknown,
-	ResultRecordType extends RecordType = RecordType,
+	DataType extends Data = Data,
+	MutationErrorType = unknown,
+	ResultType extends DataType = DataType,
 >(
-	resource?: ResourceType,
-	params: Partial<CreateParams<RecordType>> = {},
-	options: UseCreateOptions<
-		ResourceType,
-		RecordType,
-		MutationError,
-		ResultRecordType
-	> = {},
-): UseCreateResult<
-	ResourceType,
-	RecordType,
-	boolean,
-	MutationError,
-	ResultRecordType
-> => {
+	resource?: string,
+	params: Partial<CreateParams<DataType>> = {},
+	options: UseCreateOptions<DataType, MutationErrorType, ResultType> = {},
+): UseCreateResult<DataType, boolean, MutationErrorType, ResultType> => {
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 
@@ -126,19 +106,16 @@ export const useCreate = <
 	} = options;
 
 	const dataProviderCreate = (
-		resource: ResourceType,
-		params: CreateParams<RecordType>,
+		resource: string,
+		params: CreateParams<DataType>,
 	) => {
-		return dataProvider.create<ResourceType, RecordType, ResultRecordType>(
-			resource,
-			params,
-		);
+		return dataProvider.create<DataType, ResultType>(resource, params);
 	};
 
 	const [mutate, mutationResult] = useMutationWithMutationMode<
-		MutationError,
-		CreateResult<ResultRecordType>,
-		UseCreateMutateParams<ResourceType, RecordType>
+		MutationErrorType,
+		CreateResult<ResultType>,
+		UseCreateMutateParams<DataType>
 	>(
 		{ resource, ...params },
 		{
@@ -154,7 +131,7 @@ export const useCreate = <
 						"useCreate mutation requires a non-empty data object",
 					);
 				}
-				return dataProviderCreate(resource, params as CreateParams<RecordType>);
+				return dataProviderCreate(resource, params as CreateParams<DataType>);
 			},
 			updateCache: ({ resource, ...params }, { mutationMode }, result) => {
 				const id =
@@ -177,7 +154,7 @@ export const useCreate = <
 
 				queryClient.setQueryData(
 					[resource, "getOne", { id: String(id), meta: params.meta }],
-					(record: RecordType) => ({ ...record, ...clonedData }),
+					(record: DataType) => ({ ...record, ...clonedData }),
 					{ updatedAt },
 				);
 
@@ -210,7 +187,7 @@ export const useCreate = <
 						// This is necessary to avoid breaking changes in useCreate:
 						// The mutation function must have the same signature as before (resource, params) and not ({ resource, params })
 						const { resource, ...params } = args as Required<
-							UseCreateMutateParams<ResourceType, RecordType>
+							UseCreateMutateParams<DataType>
 						>;
 						// TODO 检查 args 完整性
 						return mutateWithMiddlewares(resource, params);
@@ -235,13 +212,13 @@ export const useCreate = <
 	);
 
 	const create = (
-		callTimeResource: ResourceType | undefined = resource,
-		callTimeParams: Partial<CreateParams<RecordType>> = {},
+		callTimeResource: string | undefined = resource,
+		callTimeParams: Partial<CreateParams<DataType>> = {},
 		callTimeOptions: MutateOptions<
-			ResultRecordType,
-			MutationError,
-			Partial<UseCreateMutateParams<ResourceType, RecordType>>,
-			unknown
+			ResultType,
+			MutationErrorType,
+			Partial<UseCreateMutateParams<DataType>>,
+			OnMutateResult
 		> & {
 			mutationMode?: MutationMode;
 			returnPromise?: boolean;
@@ -262,24 +239,17 @@ export const useCreate = <
 /**
  * useCreate mutation 的参数类型
  */
-export interface UseCreateMutateParams<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = any,
-> {
+export interface UseCreateMutateParams<DataType extends Data> {
 	/** 资源名称 */
-	resource?: ResourceType;
+	resource?: string;
 	/** 要创建的数据（不含 id） */
-	data?: Partial<Omit<RecordType, "id">>;
+	data?: Partial<Omit<DataType, "id">>;
 	/** 元数据 */
 	meta?: any;
 }
 
-type CreateFunction<
-	ResourceType extends Resource,
-	DataType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	ResultType extends DataType = DataType,
-> = (
-	resource: ResourceType,
+type CreateFunction<DataType extends Data, ResultType extends DataType> = (
+	resource: string,
 	params: CreateParams<DataType>,
 ) => Promise<CreateResult<ResultType>>;
 
@@ -287,15 +257,14 @@ type CreateFunction<
  * useCreate hook 的选项类型
  */
 export type UseCreateOptions<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = any,
-	MutationError = unknown,
-	ResultRecordType extends RecordType = RecordType,
+	DataType extends Data,
+	MutationErrorType,
+	ResultType extends DataType,
 > = Omit<
 	UseMutationOptions<
-		ResultRecordType,
-		MutationError,
-		Partial<UseCreateMutateParams<ResourceType, RecordType>>,
+		ResultType,
+		MutationErrorType,
+		Partial<UseCreateMutateParams<DataType>>,
 		OnMutateResult
 	>,
 	"mutationFn"
@@ -306,11 +275,7 @@ export type UseCreateOptions<
 	returnPromise?: boolean;
 	/** 获取带中间件的 mutate 函数 */
 	getMutateWithMiddlewares?: <
-		CreateFunctionType extends CreateFunction<
-			ResourceType,
-			RecordType,
-			ResultRecordType
-		>,
+		CreateFunctionType extends CreateFunction<DataType, ResultType>,
 	>(
 		mutate: CreateFunctionType,
 	) => (
@@ -322,21 +287,20 @@ export type UseCreateOptions<
  * create mutation 函数类型
  */
 export type CreateMutationFunction<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = any,
-	TReturnPromise extends boolean = boolean,
-	MutationError = unknown,
-	ResultRecordType extends RecordType = RecordType,
+	DataType extends Data,
+	ReturnPromiseType extends boolean,
+	MutationErrorType,
+	ResultType extends DataType,
 > = (
-	resource?: ResourceType,
-	params?: Partial<CreateParams<RecordType>>,
+	resource?: string,
+	params?: Partial<CreateParams<DataType>>,
 	options?: MutateOptions<
-		ResultRecordType,
-		MutationError,
-		Partial<UseCreateMutateParams<ResourceType, RecordType>>,
-		unknown
-	> & { mutationMode?: MutationMode; returnPromise?: TReturnPromise },
-) => Promise<TReturnPromise extends true ? ResultRecordType : void>;
+		ResultType,
+		MutationErrorType,
+		Partial<UseCreateMutateParams<DataType>>,
+		OnMutateResult
+	> & { mutationMode?: MutationMode; returnPromise?: ReturnPromiseType },
+) => Promise<ReturnPromiseType extends true ? ResultType : void>;
 
 /**
  * useCreate hook 的返回值类型
@@ -344,23 +308,21 @@ export type CreateMutationFunction<
  * @returns 元组 [create 函数, mutation 结果对象]
  */
 export type UseCreateResult<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = any,
-	TReturnPromise extends boolean = boolean,
-	MutationError = unknown,
-	ResultRecordType extends RecordType = RecordType,
+	DataType extends Data = any,
+	ReturnPromiseType extends boolean = boolean,
+	MutationErrorType = unknown,
+	ResultType extends DataType = DataType,
 > = [
 	CreateMutationFunction<
-		ResourceType,
-		RecordType,
-		TReturnPromise,
-		MutationError,
-		ResultRecordType
+		DataType,
+		ReturnPromiseType,
+		MutationErrorType,
+		ResultType
 	>,
 	UseMutationResult<
-		ResultRecordType,
-		MutationError,
-		Partial<UseCreateMutateParams<ResourceType, RecordType>>,
-		unknown
+		ResultType,
+		MutationErrorType,
+		Partial<UseCreateMutateParams<DataType>>,
+		OnMutateResult
 	> & { isLoading: boolean },
 ];

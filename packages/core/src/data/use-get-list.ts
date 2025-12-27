@@ -5,13 +5,8 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
-import type {
-	Data,
-	GetListParams,
-	GetListResult,
-	InferDataType,
-	Resource,
-} from "./types";
+import type { Data } from "../types";
+import type { GetListParams, GetListResult } from "./types";
 import { useDataProvider } from "./use-data-provider";
 
 const MAX_DATA_LENGTH_TO_CACHE = 100;
@@ -27,16 +22,14 @@ const MAX_DATA_LENGTH_TO_CACHE = 100;
  *
  * 使用相同参数第二次调用此 hook 时，会返回缓存的结果，直到响应到达为止。
  *
- * @param {string} resource 资源名称，例如 'posts'
- * @param {Params} params getList 参数 { pagination, sort, filter, meta }
- * @param {Object} options 传递给 queryClient 的选项对象
+ * @param resource 资源名称，例如 'posts'
+ * @param params getList 参数，包含：
+ * - pagination: 请求分页参数 { page, perPage }，例如 { page: 1, perPage: 10 }
+ * - sort: 请求排序参数 { field, order }，例如 { field: 'id', order: 'DESC' }
+ * - filter: 请求过滤器，例如 { title: 'hello, world' }
+ * - meta: 可选的元数据参数
+ * @param options 传递给 queryClient 的选项对象
  * 可以包含在成功或失败时执行的副作用，例如 { onSuccess: () => { refresh(); } }
- *
- * @typedef Params
- * @prop params.pagination 请求分页参数 { page, perPage }，例如 { page: 1, perPage: 10 }
- * @prop params.sort 请求排序参数 { field, order }，例如 { field: 'id', order: 'DESC' }
- * @prop params.filter 请求过滤器，例如 { title: 'hello, world' }
- * @prop params.meta 可选的元数据参数
  *
  * @returns 当前请求状态。解构为 { data, total, error, isPending, refetch }
  *
@@ -80,15 +73,11 @@ const MAX_DATA_LENGTH_TO_CACHE = 100;
  *     );
  * };
  */
-export function useGetList<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	ErrorType = Error,
->(
-	resource: ResourceType,
+export function useGetList<DataType extends Data = any, ErrorType = Error>(
+	resource: string,
 	params: Partial<GetListParams> = {},
-	options: UseGetListOptions<ResourceType, RecordType, ErrorType> = {},
-): UseGetListHookValue<RecordType> {
+	options: UseGetListOptions<DataType, ErrorType> = {},
+): UseGetListHookValue<DataType, ErrorType> {
 	const {
 		pagination = { page: 1, perPage: 25 },
 		sort = { field: "id", order: "DESC" },
@@ -101,13 +90,13 @@ export function useGetList<
 	const { onError, onSuccess, onSettled, ...queryOptions } = options;
 
 	const result = useQuery<
-		GetListResult<RecordType>,
+		GetListResult<DataType>,
 		ErrorType,
-		GetListResult<RecordType>
+		GetListResult<DataType>
 	>({
 		queryKey: [resource, "getList", { pagination, sort, filter, meta }],
 		queryFn: async (queryParams) => {
-			return await dataProvider.getList<ResourceType, RecordType>(resource, {
+			return await dataProvider.getList<DataType>(resource, {
 				pagination,
 				sort,
 				filter,
@@ -178,7 +167,7 @@ export function useGetList<
 					}
 				: result,
 		[result],
-	) as unknown as UseQueryResult<RecordType[], Error> & {
+	) as unknown as UseQueryResult<DataType[], ErrorType> & {
 		total?: number;
 		pageInfo?: {
 			hasNextPage?: boolean;
@@ -191,21 +180,17 @@ export function useGetList<
 /**
  * useGetList hook 的选项类型
  */
-export type UseGetListOptions<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	ErrorType = Error,
-> = Omit<
-	UseQueryOptions<GetListResult<RecordType>, ErrorType>,
+export type UseGetListOptions<DataType extends Data, ErrorType> = Omit<
+	UseQueryOptions<GetListResult<DataType>, ErrorType>,
 	"queryKey" | "queryFn"
 > & {
 	/** 成功时的回调函数 */
-	onSuccess?: (value: GetListResult<RecordType>) => void;
+	onSuccess?: (value: GetListResult<DataType>) => void;
 	/** 失败时的回调函数 */
 	onError?: (error: ErrorType) => void;
 	/** 完成时的回调函数（无论成功或失败） */
 	onSettled?: (
-		data?: GetListResult<RecordType>,
+		data?: GetListResult<DataType>,
 		error?: ErrorType | null,
 	) => void;
 };
@@ -213,10 +198,10 @@ export type UseGetListOptions<
 /**
  * useGetList hook 的返回值类型
  */
-export type UseGetListHookValue<RecordType extends Data> = UseQueryResult<
-	RecordType[],
-	Error
-> & {
+export type UseGetListHookValue<
+	DataType extends Data,
+	ErrorType,
+> = UseQueryResult<DataType[], ErrorType> & {
 	/** 总记录数 */
 	total?: number;
 	/** 分页信息 */

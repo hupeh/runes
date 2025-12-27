@@ -7,13 +7,8 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
-import type {
-	Data,
-	GetInfiniteListResult,
-	GetListParams,
-	InferDataType,
-	Resource,
-} from "./types";
+import type { Data } from "../types";
+import type { GetInfiniteListResult, GetListParams } from "./types";
 import { useDataProvider } from "./use-data-provider";
 
 const MAX_DATA_LENGTH_TO_CACHE = 100;
@@ -26,16 +21,14 @@ const MAX_DATA_LENGTH_TO_CACHE = 100;
  *
  * 使用相同参数第二次调用此 hook 时，会返回缓存的结果，直到响应到达为止。
  *
- * @param {string} resource 资源名称，例如 'posts'
- * @param {Params} params getList 参数 { pagination, sort, filter, meta }
- * @param {Object} options 传递给 queryClient 的选项对象
+ * @param resource 资源名称，例如 'posts'
+ * @param params getList 参数，包含：
+ * - pagination: 请求分页参数 { page, perPage }，例如 { page: 1, perPage: 10 }
+ * - sort: 请求排序参数 { field, order }，例如 { field: 'id', order: 'DESC' }
+ * - filter: 请求过滤器，例如 { title: 'hello, world' }
+ * - meta: 可选的元数据参数
+ * @param options 传递给 queryClient 的选项对象
  * 可以包含在成功或失败时执行的副作用，例如 { onSuccess: () => { fetchNextPage(); } }
- *
- * @typedef Params
- * @prop params.pagination 请求分页参数 { page, perPage }，例如 { page: 1, perPage: 10 }
- * @prop params.sort 请求排序参数 { field, order }，例如 { field: 'id', order: 'DESC' }
- * @prop params.filter 请求过滤器，例如 { title: 'hello, world' }
- * @prop params.meta 可选的元数据参数
  *
  * @returns 当前请求状态。解构为 { data, total, error, isPending, isSuccess, hasNextPage, fetchNextPage }
  *
@@ -103,14 +96,13 @@ const MAX_DATA_LENGTH_TO_CACHE = 100;
  */
 
 export function useInfiniteGetList<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
+	DataType extends Data = any,
 	ErrorType = Error,
 >(
-	resource: ResourceType,
+	resource: string,
 	params: Partial<GetListParams> = {},
-	options: UseInfiniteGetListOptions<RecordType, ErrorType> = {},
-): UseInfiniteGetListHookValue<RecordType, ErrorType> {
+	options: UseInfiniteGetListOptions<DataType, ErrorType> = {},
+): UseInfiniteGetListHookValue<DataType, ErrorType> {
 	const {
 		pagination = { page: 1, perPage: 25 },
 		sort = { field: "id", order: "DESC" },
@@ -122,27 +114,24 @@ export function useInfiniteGetList<
 	const { onSuccess, onError, onSettled, ...queryOptions } = options;
 
 	const result = useInfiniteQuery<
-		GetInfiniteListResult<RecordType>,
+		GetInfiniteListResult<DataType>,
 		ErrorType,
-		InfiniteData<GetInfiniteListResult<RecordType>>,
+		InfiniteData<GetInfiniteListResult<DataType>>,
 		QueryKey,
 		number
 	>({
 		queryKey: [resource, "getInfiniteList", { pagination, sort, filter, meta }],
 		queryFn: async ({ pageParam = pagination.page, signal }) => {
-			const result = await dataProvider.getList<ResourceType, RecordType>(
-				resource,
-				{
-					pagination: {
-						page: pageParam,
-						perPage: pagination.perPage,
-					},
-					sort,
-					filter,
-					meta,
-					signal,
+			const result = await dataProvider.getList<DataType>(resource, {
+				pagination: {
+					page: pageParam,
+					perPage: pagination.perPage,
 				},
-			);
+				sort,
+				filter,
+				meta,
+				signal,
+			});
 			return {
 				...result,
 				pageParam,
@@ -259,7 +248,7 @@ export function useInfiniteGetList<
 				}
 			: { ...result, hasPreviousPage }
 	) as UseInfiniteQueryResult<
-		InfiniteData<GetInfiniteListResult<RecordType>>,
+		InfiniteData<GetInfiniteListResult<DataType>>,
 		ErrorType
 	> & {
 		total?: number;
@@ -271,13 +260,13 @@ export function useInfiniteGetList<
  * useInfiniteGetList hook 的选项类型
  */
 export type UseInfiniteGetListOptions<
-	RecordType extends Data,
+	DataType extends Data,
 	ErrorType = Error,
 > = Omit<
 	UseInfiniteQueryOptions<
-		GetInfiniteListResult<RecordType>,
+		GetInfiniteListResult<DataType>,
 		ErrorType,
-		InfiniteData<GetInfiniteListResult<RecordType>>,
+		InfiniteData<GetInfiniteListResult<DataType>>,
 		QueryKey,
 		number
 	>,
@@ -288,12 +277,12 @@ export type UseInfiniteGetListOptions<
 	| "initialPageParam"
 > & {
 	/** 成功时的回调函数 */
-	onSuccess?: (data: InfiniteData<GetInfiniteListResult<RecordType>>) => void;
+	onSuccess?: (data: InfiniteData<GetInfiniteListResult<DataType>>) => void;
 	/** 失败时的回调函数 */
 	onError?: (error: ErrorType) => void;
 	/** 完成时的回调函数（无论成功或失败） */
 	onSettled?: (
-		data?: InfiniteData<GetInfiniteListResult<RecordType>>,
+		data?: InfiniteData<GetInfiniteListResult<DataType>>,
 		error?: ErrorType | null,
 	) => void;
 };
@@ -302,10 +291,10 @@ export type UseInfiniteGetListOptions<
  * useInfiniteGetList hook 的返回值类型
  */
 export type UseInfiniteGetListHookValue<
-	RecordType extends Data,
+	DataType extends Data,
 	ErrorType = Error,
 > = UseInfiniteQueryResult<
-	InfiniteData<GetInfiniteListResult<RecordType>>,
+	InfiniteData<GetInfiniteListResult<DataType>>,
 	ErrorType
 > & {
 	/** 总记录数 */

@@ -6,14 +6,13 @@ import {
 	type UseMutationResult,
 	useQueryClient,
 } from "@tanstack/react-query";
+import type { Data } from "../types";
 import type {
 	DeleteManyParams,
 	DeleteManyResult,
 	GetInfiniteListResult,
-	InferDataType,
 	MutationMode,
 	GetListResult as OriginalGetListResult,
-	Resource,
 } from "./types";
 import { useDataProvider } from "./use-data-provider";
 import {
@@ -24,14 +23,11 @@ import {
 /**
  * 获取一个调用 dataProvider.deleteMany() 方法的回调函数，以及返回结果和加载状态
  *
- * @param {string} resource 资源名称
- * @param {Params} params 删除参数 { ids }
- * @param {Object} options 传递给 queryClient 的选项对象
+ * @param resource 资源名称
+ * @param params 删除参数，包含 ids 资源标识符数组，例如 { ids: [123, 456] }
+ * @param options 传递给 queryClient 的选项对象
  * 可以包含在成功或失败时执行的副作用，例如 { onSuccess: () => { refresh(); } }
  * 可以包含 mutation 模式（optimistic/pessimistic/undoable），例如 { mutationMode: 'undoable' }
- *
- * @typedef Params
- * @prop params.ids 资源标识符数组，例如 [123, 456]
  *
  * @returns 当前的 mutation 状态。解构为 [deleteMany, { data, error, isPending }]
  *
@@ -101,22 +97,26 @@ import {
  * };
  */
 export const useDeleteMany = <
-	ResourceType extends Resource = Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	MutationError = unknown,
+	DataType extends Data = Data,
+	MutationErrorType = unknown,
+	ReturnPromiseType extends boolean = boolean,
 >(
-	resource?: ResourceType,
-	params: Partial<DeleteManyParams<RecordType>> = {},
-	options: UseDeleteManyOptions<ResourceType, RecordType, MutationError> = {},
-): UseDeleteManyResult<ResourceType, RecordType, MutationError> => {
+	resource?: string,
+	params: Partial<DeleteManyParams<DataType>> = {},
+	options: UseDeleteManyOptions<
+		DataType,
+		MutationErrorType,
+		ReturnPromiseType
+	> = {},
+): UseDeleteManyResult<DataType, MutationErrorType, ReturnPromiseType> => {
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { mutationMode = "pessimistic", ...mutationOptions } = options;
 
 	const [mutate, mutationResult] = useMutationWithMutationMode<
-		MutationError,
-		DeleteManyResult<RecordType>,
-		UseDeleteManyMutateParams<ResourceType, RecordType>
+		MutationErrorType,
+		DeleteManyResult<DataType>,
+		UseDeleteManyMutateParams<DataType>
 	>(
 		{ resource, ...params },
 		{
@@ -130,9 +130,9 @@ export const useDeleteMany = <
 				if (params.ids == null) {
 					throw new Error("useDeleteMany mutation requires an array of ids");
 				}
-				return dataProvider.deleteMany<ResourceType, RecordType>(
+				return dataProvider.deleteMany<DataType>(
 					resource,
-					params as DeleteManyParams<RecordType>,
+					params as DeleteManyParams<DataType>,
 				);
 			},
 			updateCache: ({ resource, ...params }, { mutationMode }) => {
@@ -141,7 +141,7 @@ export const useDeleteMany = <
 				const now = Date.now();
 				const updatedAt = mutationMode === "undoable" ? now + 5 * 1000 : now;
 
-				const updateColl = (old: RecordType[]) => {
+				const updateColl = (old: DataType[]) => {
 					if (!old) {
 						return old;
 					}
@@ -163,8 +163,8 @@ export const useDeleteMany = <
 					return newCollection;
 				};
 
-				type GetListResult = Omit<OriginalGetListResult<RecordType>, "data"> & {
-					data?: RecordType[];
+				type GetListResult = Omit<OriginalGetListResult<DataType>, "data"> & {
+					data?: DataType[];
 				};
 
 				queryClient.setQueriesData(
@@ -191,7 +191,7 @@ export const useDeleteMany = <
 					{ queryKey: [resource, "getInfiniteList"] },
 					(
 						res: UseInfiniteQueryResult<
-							InfiniteData<GetInfiniteListResult<RecordType>>
+							InfiniteData<GetInfiniteListResult<DataType>>
 						>["data"],
 					) => {
 						if (!res || !res.pages) {
@@ -218,7 +218,7 @@ export const useDeleteMany = <
 				);
 				queryClient.setQueriesData(
 					{ queryKey: [resource, "getMany"] },
-					(coll: RecordType[]) =>
+					(coll: DataType[]) =>
 						coll && coll.length > 0 ? updateColl(coll) : coll,
 					{ updatedAt },
 				);
@@ -273,16 +273,16 @@ export const useDeleteMany = <
 	);
 
 	const deleteMany = (
-		callTimeResource: ResourceType | undefined = resource,
-		callTimeParams: Partial<DeleteManyParams<RecordType>> = {},
+		callTimeResource: string | undefined = resource,
+		callTimeParams: Partial<DeleteManyParams<DataType>> | undefined = {},
 		callTimeOptions: MutateOptions<
-			Array<RecordType["id"]> | undefined,
-			MutationError,
-			Partial<UseDeleteManyMutateParams<ResourceType, RecordType>>,
+			Array<DataType["id"]> | undefined,
+			MutationErrorType,
+			Partial<UseDeleteManyMutateParams<DataType>>,
 			OnMutateResult
 		> & {
 			mutationMode?: MutationMode;
-			returnPromise?: boolean;
+			returnPromise?: ReturnPromiseType;
 		} = {},
 	) => {
 		return mutate(
@@ -300,14 +300,11 @@ export const useDeleteMany = <
 /**
  * useDeleteMany mutation 的参数类型
  */
-export interface UseDeleteManyMutateParams<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType>,
-> {
+export interface UseDeleteManyMutateParams<DataType extends Data> {
 	/** 资源名称 */
-	resource?: ResourceType;
+	resource?: string;
 	/** 要删除的记录 ID 数组 */
-	ids?: Array<RecordType["id"]>;
+	ids?: Array<DataType["id"]>;
 	/** 元数据 */
 	meta?: any;
 }
@@ -316,15 +313,14 @@ export interface UseDeleteManyMutateParams<
  * useDeleteMany hook 的选项类型
  */
 export type UseDeleteManyOptions<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType>,
-	MutationErrorType = unknown,
-	ReturnPromiseType extends boolean = boolean,
+	DataType extends Data,
+	MutationErrorType,
+	ReturnPromiseType extends boolean,
 > = Omit<
 	UseMutationOptions<
-		Array<RecordType["id"]> | undefined,
+		Array<DataType["id"]> | undefined,
 		MutationErrorType,
-		Partial<UseDeleteManyMutateParams<ResourceType, RecordType>>,
+		Partial<UseDeleteManyMutateParams<DataType>>,
 		OnMutateResult
 	>,
 	"mutationFn"
@@ -341,30 +337,27 @@ export type UseDeleteManyOptions<
  * @returns 元组 [deleteMany 函数, mutation 结果对象]
  */
 export type UseDeleteManyResult<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType>,
+	DataType extends Data = any,
 	MutationErrorType = unknown,
 	ReturnPromiseType extends boolean = boolean,
 > = [
 	(
-		resource?: ResourceType,
-		params?: Partial<DeleteManyParams<RecordType>>,
+		resource?: string,
+		params?: Partial<DeleteManyParams<DataType>>,
 		options?: MutateOptions<
-			Array<RecordType["id"]> | undefined,
+			DataType["id"][] | undefined,
 			MutationErrorType,
-			Partial<UseDeleteManyMutateParams<ResourceType, RecordType>>,
+			Partial<UseDeleteManyMutateParams<DataType>>,
 			OnMutateResult
 		> & {
 			mutationMode?: MutationMode;
 			returnPromise?: ReturnPromiseType;
 		},
-	) => Promise<
-		ReturnPromiseType extends true ? Array<RecordType["id"]> | undefined : void
-	>,
+	) => Promise<void | DataType["id"][] | undefined>,
 	UseMutationResult<
-		Array<RecordType["id"]> | undefined,
+		DataType["id"][] | undefined,
 		MutationErrorType,
-		Partial<DeleteManyParams<RecordType> & { resource?: ResourceType }>,
+		Partial<DeleteManyParams<DataType> & { resource?: string }>,
 		OnMutateResult
 	> & { isLoading: boolean },
 ];

@@ -1,7 +1,7 @@
+import type { Data } from "../types";
 import type {
 	CreateParams,
 	CreateResult,
-	Data,
 	DataProvider,
 	DeleteManyParams,
 	DeleteManyResult,
@@ -15,8 +15,6 @@ import type {
 	GetManyResult,
 	GetOneParams,
 	GetOneResult,
-	InferDataType,
-	Resource,
 	UpdateManyParams,
 	UpdateManyResult,
 	UpdateParams,
@@ -26,32 +24,30 @@ import type {
 /**
  * 扩展 dataProvider 以在读写调用前后执行回调函数
  *
- * @param {DataProvider} dataProvider 要包装的 dataProvider
- * @param {ResourceCallbacks[]} handlers ResourceCallbacks 数组
- *
- * @typedef {Object} ResourceCallbacks
- * @property {string} resource 资源名称
- * @property {AfterCreate} [afterCreate] create 之后执行的回调（或回调数组）
- * @property {AfterDelete} [afterDelete] delete 之后执行的回调（或回调数组）
- * @property {AfterDeleteMany} [afterDeleteMany] deleteMany 之后执行的回调（或回调数组）
- * @property {AfterGetList} [afterGetList] getList 之后执行的回调（或回调数组）
- * @property {AfterGetMany} [afterGetMany] getMany 之后执行的回调（或回调数组）
- * @property {AfterGetManyReference} [afterGetManyReference] getManyReference 之后执行的回调（或回调数组）
- * @property {AfterGetOne} [afterGetOne] getOne 之后执行的回调（或回调数组）
- * @property {AfterRead} [afterRead] read（getList、getMany、getManyReference、getOne）之后执行的回调（或回调数组）
- * @property {AfterSave} [afterSave] save（create、update、updateMany）之后执行的回调（或回调数组）
- * @property {AfterUpdate} [afterUpdate] update 之后执行的回调（或回调数组）
- * @property {AfterUpdateMany} [afterUpdateMany] updateMany 之后执行的回调（或回调数组）
- * @property {BeforeCreate} [beforeCreate] create 之前执行的回调（或回调数组）
- * @property {BeforeDelete} [beforeDelete] delete 之前执行的回调（或回调数组）
- * @property {BeforeDeleteMany} [beforeDeleteMany] deleteMany 之前执行的回调（或回调数组）
- * @property {BeforeGetList} [beforeGetList] getList 之前执行的回调（或回调数组）
- * @property {BeforeGetMany} [beforeGetMany] getMany 之前执行的回调（或回调数组）
- * @property {BeforeGetManyReference} [beforeGetManyReference] getManyReference 之前执行的回调（或回调数组）
- * @property {BeforeGetOne} [beforeGetOne] getOne 之前执行的回调（或回调数组）
- * @property {BeforeSave} [beforeSave] save（create、update、updateMany）之前执行的回调（或回调数组）
- * @property {BeforeUpdate} [beforeUpdate] update 之前执行的回调（或回调数组）
- * @property {BeforeUpdateMany} [beforeUpdateMany] updateMany 之前执行的回调（或回调数组）
+ * @param dataProvider 要包装的 dataProvider
+ * @param handlers ResourceCallbacks 数组，每个元素包含：
+ * - resource: 资源名称
+ * - afterCreate: create 之后执行的回调（或回调数组）
+ * - afterDelete: delete 之后执行的回调（或回调数组）
+ * - afterDeleteMany: deleteMany 之后执行的回调（或回调数组）
+ * - afterGetList: getList 之后执行的回调（或回调数组）
+ * - afterGetMany: getMany 之后执行的回调（或回调数组）
+ * - afterGetManyReference: getManyReference 之后执行的回调（或回调数组）
+ * - afterGetOne: getOne 之后执行的回调（或回调数组）
+ * - afterRead: read（getList、getMany、getManyReference、getOne）之后执行的回调（或回调数组）
+ * - afterSave: save（create、update、updateMany）之后执行的回调（或回调数组）
+ * - afterUpdate: update 之后执行的回调（或回调数组）
+ * - afterUpdateMany: updateMany 之后执行的回调（或回调数组）
+ * - beforeCreate: create 之前执行的回调（或回调数组）
+ * - beforeDelete: delete 之前执行的回调（或回调数组）
+ * - beforeDeleteMany: deleteMany 之前执行的回调（或回调数组）
+ * - beforeGetList: getList 之前执行的回调（或回调数组）
+ * - beforeGetMany: getMany 之前执行的回调（或回调数组）
+ * - beforeGetManyReference: getManyReference 之前执行的回调（或回调数组）
+ * - beforeGetOne: getOne 之前执行的回调（或回调数组）
+ * - beforeSave: save（create、update、updateMany）之前执行的回调（或回调数组）
+ * - beforeUpdate: update 之前执行的回调（或回调数组）
+ * - beforeUpdateMany: updateMany 之前执行的回调（或回调数组）
  *
  * 警告：
  * - 回调中发起的查询不是通过 react-query 完成的，因此数据的任何更改都不会自动反映在 UI 中。
@@ -151,12 +147,8 @@ export const withLifecycleCallbacks = (
 	return {
 		...dataProvider,
 
-		getList: async <
-			ResourceType extends Resource,
-			RecordType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
-		>(
-			resource: ResourceType,
+		getList: async <DataType extends Data = any>(
+			resource: string,
 			params: GetListParams,
 		) => {
 			let newParams = params;
@@ -168,10 +160,7 @@ export const withLifecycleCallbacks = (
 				handlers,
 				resource,
 			});
-			let result = await dataProvider.getList<ResourceType, RecordType>(
-				resource,
-				newParams,
-			);
+			let result = await dataProvider.getList<DataType>(resource, newParams);
 			result = await applyCallbacks({
 				name: "afterGetList",
 				params: result,
@@ -195,12 +184,10 @@ export const withLifecycleCallbacks = (
 		},
 
 		getOne: async <
-			ResourceType extends Resource,
-			DataType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
+			DataType extends Data = any,
 			ResultType extends DataType = DataType,
 		>(
-			resource: ResourceType,
+			resource: string,
 			params: GetOneParams<DataType>,
 		) => {
 			let newParams = params;
@@ -212,11 +199,10 @@ export const withLifecycleCallbacks = (
 				handlers,
 				resource,
 			});
-			let result = await dataProvider.getOne<
-				ResourceType,
-				DataType,
-				ResultType
-			>(resource, newParams);
+			let result = await dataProvider.getOne<DataType, ResultType>(
+				resource,
+				newParams,
+			);
 			result = await applyCallbacks({
 				name: "afterGetOne",
 				params: result,
@@ -235,12 +221,8 @@ export const withLifecycleCallbacks = (
 			return result;
 		},
 
-		getMany: async <
-			ResourceType extends Resource,
-			DataType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
-		>(
-			resource: ResourceType,
+		getMany: async <DataType extends Data = any>(
+			resource: string,
 			params: GetManyParams<DataType>,
 		) => {
 			let newParams = params;
@@ -252,10 +234,7 @@ export const withLifecycleCallbacks = (
 				handlers,
 				resource,
 			});
-			let result = await dataProvider.getMany<ResourceType, DataType>(
-				resource,
-				newParams,
-			);
+			let result = await dataProvider.getMany<DataType>(resource, newParams);
 			result = await applyCallbacks({
 				name: "afterGetMany",
 				params: result,
@@ -278,12 +257,8 @@ export const withLifecycleCallbacks = (
 			return result;
 		},
 
-		getManyReference: async <
-			ResourceType extends Resource,
-			DataType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
-		>(
-			resource: ResourceType,
+		getManyReference: async <DataType extends Data = any>(
+			resource: string,
 			params: GetManyReferenceParams,
 		) => {
 			let newParams = params;
@@ -295,7 +270,7 @@ export const withLifecycleCallbacks = (
 				handlers,
 				resource,
 			});
-			let result = await dataProvider.getManyReference<ResourceType, DataType>(
+			let result = await dataProvider.getManyReference<DataType>(
 				resource,
 				newParams,
 			);
@@ -320,12 +295,8 @@ export const withLifecycleCallbacks = (
 			return result;
 		},
 
-		update: async <
-			ResourceType extends Resource,
-			DataType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
-		>(
-			resource: ResourceType,
+		update: async <DataType extends Data = any>(
+			resource: string,
 			params: UpdateParams<DataType>,
 		) => {
 			let newParams = params;
@@ -344,10 +315,7 @@ export const withLifecycleCallbacks = (
 				handlers,
 				resource,
 			});
-			let result = await dataProvider.update<ResourceType, DataType>(
-				resource,
-				newParams,
-			);
+			let result = await dataProvider.update<DataType>(resource, newParams);
 			result = await applyCallbacks({
 				name: "afterUpdate",
 				params: result,
@@ -367,12 +335,10 @@ export const withLifecycleCallbacks = (
 		},
 
 		create: async <
-			ResourceType extends Resource,
-			DataType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
+			DataType extends Data = any,
 			ResultType extends DataType = DataType,
 		>(
-			resource: ResourceType,
+			resource: string,
 			params: CreateParams<DataType>,
 		) => {
 			let newParams = params;
@@ -391,11 +357,10 @@ export const withLifecycleCallbacks = (
 				handlers,
 				resource,
 			});
-			let result = await dataProvider.create<
-				ResourceType,
-				DataType,
-				ResultType
-			>(resource, newParams);
+			let result = await dataProvider.create<DataType, ResultType>(
+				resource,
+				newParams,
+			);
 			result = await applyCallbacks({
 				name: "afterCreate",
 				params: result,
@@ -414,12 +379,8 @@ export const withLifecycleCallbacks = (
 			return result;
 		},
 
-		delete: async <
-			ResourceType extends Resource,
-			DataType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
-		>(
-			resource: ResourceType,
+		delete: async <DataType extends Data = any>(
+			resource: string,
 			params: DeleteParams<DataType>,
 		) => {
 			let newParams = params;
@@ -431,10 +392,7 @@ export const withLifecycleCallbacks = (
 				handlers,
 				resource,
 			});
-			let result = await dataProvider.delete<ResourceType, DataType>(
-				resource,
-				newParams,
-			);
+			let result = await dataProvider.delete<DataType>(resource, newParams);
 			result = await applyCallbacks({
 				name: "afterDelete",
 				params: result,
@@ -446,12 +404,8 @@ export const withLifecycleCallbacks = (
 			return result;
 		},
 
-		updateMany: async <
-			ResourceType extends Resource,
-			DataType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
-		>(
-			resource: ResourceType,
+		updateMany: async <DataType extends Data = any>(
+			resource: string,
 			params: UpdateManyParams<DataType>,
 		) => {
 			let newParams = params;
@@ -472,10 +426,7 @@ export const withLifecycleCallbacks = (
 				resource,
 			});
 
-			let result = await dataProvider.updateMany<ResourceType, DataType>(
-				resource,
-				newParams,
-			);
+			let result = await dataProvider.updateMany<DataType>(resource, newParams);
 			result = await applyCallbacks({
 				name: "afterUpdateMany",
 				params: result,
@@ -508,12 +459,8 @@ export const withLifecycleCallbacks = (
 			return result;
 		},
 
-		deleteMany: async <
-			ResourceType extends Resource,
-			DataType extends
-				InferDataType<ResourceType> = InferDataType<ResourceType>,
-		>(
-			resource: ResourceType,
+		deleteMany: async <DataType extends Data = any>(
+			resource: string,
 			params: DeleteManyParams<DataType>,
 		) => {
 			let newParams = params;
@@ -525,10 +472,7 @@ export const withLifecycleCallbacks = (
 				handlers,
 				resource,
 			});
-			let result = await dataProvider.deleteMany<ResourceType, DataType>(
-				resource,
-				newParams,
-			);
+			let result = await dataProvider.deleteMany<DataType>(resource, newParams);
 			result = await applyCallbacks({
 				name: "afterDeleteMany",
 				params: result,
@@ -545,12 +489,12 @@ export const withLifecycleCallbacks = (
 /**
  * 为给定资源和钩子应用回调到参数
  *
- * @param {DataProvider} dataProvider dataProvider
- * @param {ResourceCallbacks[]} handlers ResourceCallbacks 数组
- * @param {string} resource 资源名称
- * @param {string} hook 钩子名称（beforeGetList、afterGetOne 等）
- * @param {U} params 传递给回调的参数/结果
- * @returns {Promise<U>} 应用回调后的参数/结果
+ * @param dataProvider dataProvider 实例
+ * @param handlers ResourceCallbacks 数组
+ * @param resource 资源名称
+ * @param name 钩子名称（beforeGetList、afterGetOne 等）
+ * @param params 传递给回调的参数/结果
+ * @returns 应用回调后的参数/结果
  */
 export const applyCallbacks = async <U>({
 	name,
@@ -567,10 +511,10 @@ export const applyCallbacks = async <U>({
 }): Promise<U> => {
 	let newParams = params;
 	const handlersToApply = handlers.filter(
-		(h) => (h.resource === resource || h.resource === "*") && h[name],
+		(h) => (h.resource === resource || h.resource === "*") && (h as any)[name],
 	);
 	for (const handler of handlersToApply) {
-		const callbacksValue: ResourceCallbacksValue<any> = handler[name];
+		const callbacksValue: ResourceCallbacksValue<any> = (handler as any)[name];
 		if (Array.isArray(callbacksValue)) {
 			for (const callback of callbacksValue ?? []) {
 				newParams = await callback(newParams, dataProvider, resource);

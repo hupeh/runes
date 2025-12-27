@@ -28,30 +28,15 @@ import type {
  * const dataProvider = myCustomDataProvider || defaultDataProvider;
  */
 export const defaultDataProvider: DataProvider = {
-	/** 创建记录 - 返回空数据 */
-	create: () => Promise.resolve<CreateResult<any>>({ data: null }),
-
-	/** 删除单条记录 - 返回空数据 */
-	delete: () => Promise.resolve<DeleteResult<any>>({ data: null }),
-
-	/** 批量删除记录 - 返回空数组 */
-	deleteMany: () => Promise.resolve({ data: [] }),
-
-	/** 获取记录列表 - 返回空列表 */
-	getList: () => Promise.resolve({ data: [], total: 0 }),
-
-	/** 获取多条记录 - 返回空数组 */
-	getMany: () => Promise.resolve({ data: [] }),
-
-	/** 获取关联记录列表 - 返回空列表 */
-	getManyReference: () => Promise.resolve({ data: [], total: 0 }),
-
-	/** 获取单条记录 - 返回空数据 */
-	getOne: () => Promise.resolve<GetOneResult<any>>({ data: null }),
-
-	/** 更新单条记录 - 返回空数据 */
-	update: () => Promise.resolve<UpdateResult<any>>({ data: null }),
-
-	/** 批量更新记录 - 返回空数组 */
-	updateMany: () => Promise.resolve({ data: [] }),
+	create: () => p<CreateResult<any>>({ data: null }), // 创建记录 - 返回空数据
+	delete: () => p<DeleteResult<any>>({ data: null }), // 删除单条记录 - 返回空数据
+	deleteMany: () => p({ data: [] }), // 批量删除记录 - 返回空数组
+	getList: () => p({ data: [], total: 0 }), // 获取记录列表 - 返回空列表
+	getMany: () => p({ data: [] }), // 获取多条记录 - 返回空数组
+	getManyReference: () => p({ data: [], total: 0 }), // 获取关联记录列表 - 返回空列表
+	getOne: () => p<GetOneResult<any>>({ data: null }), // 获取单条记录 - 返回空数据
+	update: () => p<UpdateResult<any>>({ data: null }), // 更新单条记录 - 返回空数据
+	updateMany: () => p({ data: [] }), // 批量更新记录 - 返回空数组
 };
+
+const p = <T>(t: T): Promise<T> => Promise.resolve(t);

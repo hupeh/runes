@@ -105,9 +105,7 @@ export function populateQueryCache({
 			queryClient.setQueryData(
 				[resource, "getOne", { id: String(record.id) }],
 				(oldRecord) => oldRecord ?? record,
-				{
-					updatedAt,
-				},
+				{ updatedAt },
 			);
 		});
 
@@ -116,9 +114,7 @@ export function populateQueryCache({
 		queryClient.setQueryData(
 			[resource, "getMany", { ids: recordIds }],
 			validRecords,
-			{
-				updatedAt,
-			},
+			{ updatedAt },
 		);
 	});
 }

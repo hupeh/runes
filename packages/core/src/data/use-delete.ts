@@ -6,14 +6,13 @@ import {
 	type UseMutationResult,
 	useQueryClient,
 } from "@tanstack/react-query";
+import type { Data } from "../types";
 import type {
 	DeleteParams,
 	DeleteResult,
 	GetInfiniteListResult,
-	InferDataType,
 	MutationMode,
 	GetListResult as OriginalGetListResult,
-	Resource,
 } from "./types";
 import { useDataProvider } from "./use-data-provider";
 import {
@@ -24,15 +23,11 @@ import {
 /**
  * 获取一个调用 dataProvider.delete() 方法的回调函数，以及返回结果和加载状态
  *
- * @param {string} resource 资源名称
- * @param {Params} params 删除参数 { id, previousData }
- * @param {Object} options 传递给 queryClient 的选项对象
+ * @param resource 资源名称
+ * @param params 删除参数，包含 id（资源标识符，例如 123）和 previousData（更新前的记录数据）
+ * @param options 传递给 queryClient 的选项对象
  * 可以包含在成功或失败时执行的副作用，例如 { onSuccess: () => { refresh(); } }
  * 可以包含 mutation 模式（optimistic/pessimistic/undoable），例如 { mutationMode: 'undoable' }
- *
- * @typedef Params
- * @prop params.id 资源标识符，例如 123
- * @prop params.previousData 更新前的记录数据
  *
  * @returns 当前的 mutation 状态。解构为 [deleteOne, { data, error, isPending }]
  *
@@ -101,22 +96,21 @@ import {
  * };
  */
 export const useDelete = <
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	MutationError = unknown,
+	DataType extends Data = Data,
+	MutationErrorType = unknown,
 >(
-	resource?: ResourceType,
-	params: Partial<DeleteParams<RecordType>> = {},
-	options: UseDeleteOptions<ResourceType, RecordType, MutationError> = {},
-): UseDeleteResult<ResourceType, RecordType, MutationError> => {
+	resource?: string,
+	params: Partial<DeleteParams<DataType>> = {},
+	options: UseDeleteOptions<DataType, MutationErrorType> = {},
+): UseDeleteResult<DataType, MutationErrorType> => {
 	const dataProvider = useDataProvider();
 	const queryClient = useQueryClient();
 	const { mutationMode = "pessimistic", ...mutationOptions } = options;
 
 	const [mutate, mutationResult] = useMutationWithMutationMode<
-		MutationError,
-		DeleteResult<RecordType>,
-		UseDeleteMutateParams<ResourceType, RecordType>
+		MutationErrorType,
+		DeleteResult<DataType>,
+		UseDeleteMutateParams<DataType>
 	>(
 		{ resource, ...params },
 		{
@@ -130,9 +124,9 @@ export const useDelete = <
 				if (params.id == null) {
 					throw new Error("useDelete mutation requires a non-empty id");
 				}
-				return dataProvider.delete<ResourceType, RecordType>(
+				return dataProvider.delete<DataType>(
 					resource,
-					params as DeleteParams<RecordType>,
+					params as DeleteParams<DataType>,
 				);
 			},
 			updateCache: ({ resource, ...params }, { mutationMode }) => {
@@ -141,7 +135,7 @@ export const useDelete = <
 				const now = Date.now();
 				const updatedAt = mutationMode === "undoable" ? now + 5 * 1000 : now;
 
-				const updateColl = (old: RecordType[]) => {
+				const updateColl = (old: DataType[]) => {
 					if (!old) {
 						return old;
 					}
@@ -153,8 +147,8 @@ export const useDelete = <
 					return [...old.slice(0, index), ...old.slice(index + 1)];
 				};
 
-				type GetListResult = Omit<OriginalGetListResult<RecordType>, "data"> & {
-					data?: RecordType[];
+				type GetListResult = Omit<OriginalGetListResult<DataType>, "data"> & {
+					data?: DataType[];
 				};
 
 				queryClient.setQueriesData(
@@ -179,7 +173,7 @@ export const useDelete = <
 					{ queryKey: [resource, "getInfiniteList"] },
 					(
 						res: UseInfiniteQueryResult<
-							InfiniteData<GetInfiniteListResult<RecordType>>
+							InfiniteData<GetInfiniteListResult<DataType>>
 						>["data"],
 					) => {
 						if (!res || !res.pages) {
@@ -205,7 +199,7 @@ export const useDelete = <
 				);
 				queryClient.setQueriesData(
 					{ queryKey: [resource, "getMany"] },
-					(coll: RecordType[]) =>
+					(coll: DataType[]) =>
 						coll && coll.length > 0 ? updateColl(coll) : coll,
 					{ updatedAt },
 				);
@@ -248,12 +242,12 @@ export const useDelete = <
 	);
 
 	const deleteOne = (
-		callTimeResource: ResourceType | undefined = resource,
-		callTimeParams: Partial<DeleteParams<RecordType>> = {},
+		callTimeResource: string | undefined = resource,
+		callTimeParams: Partial<DeleteParams<DataType>> = {},
 		callTimeOptions: MutateOptions<
-			RecordType | undefined,
-			MutationError,
-			Partial<UseDeleteMutateParams<ResourceType, RecordType>>,
+			DataType | undefined,
+			MutationErrorType,
+			Partial<UseDeleteMutateParams<DataType>>,
 			OnMutateResult
 		> & {
 			mutationMode?: MutationMode;
@@ -275,16 +269,13 @@ export const useDelete = <
 /**
  * useDelete mutation 的参数类型
  */
-export interface UseDeleteMutateParams<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-> {
+export interface UseDeleteMutateParams<DataType extends Data> {
 	/** 资源名称 */
-	resource?: ResourceType;
+	resource?: string;
 	/** 记录 ID */
-	id?: RecordType["id"];
+	id?: DataType["id"];
 	/** 数据（通常不需要） */
-	data?: Partial<RecordType>;
+	data?: Partial<DataType>;
 	/** 删除前的数据（用于乐观更新回滚） */
 	previousData?: any;
 	/** 元数据 */
@@ -294,15 +285,11 @@ export interface UseDeleteMutateParams<
 /**
  * useDelete hook 的选项类型
  */
-export type UseDeleteOptions<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	MutationErrorType = unknown,
-> = Omit<
+export type UseDeleteOptions<DataType extends Data, MutationErrorType> = Omit<
 	UseMutationOptions<
-		RecordType,
+		DataType,
 		MutationErrorType,
-		Partial<UseDeleteMutateParams<ResourceType, RecordType>>,
+		Partial<UseDeleteMutateParams<DataType>>,
 		OnMutateResult
 	>,
 	"mutationFn"
@@ -319,28 +306,27 @@ export type UseDeleteOptions<
  * @returns 元组 [deleteOne 函数, mutation 结果对象]
  */
 export type UseDeleteResult<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
+	DataType extends Data = Data,
 	MutationErrorType = unknown,
 	ReturnPromiseType extends boolean = boolean,
 > = [
 	(
-		resource?: ResourceType,
-		params?: Partial<DeleteParams<RecordType>>,
+		resource?: string,
+		params?: Partial<DeleteParams<DataType>>,
 		options?: MutateOptions<
-			RecordType | undefined,
+			DataType | undefined,
 			MutationErrorType,
-			Partial<UseDeleteMutateParams<ResourceType, RecordType>>,
+			Partial<UseDeleteMutateParams<DataType>>,
 			OnMutateResult
 		> & {
 			mutationMode?: MutationMode;
 			returnPromise?: ReturnPromiseType;
 		},
-	) => Promise<ReturnPromiseType extends true ? RecordType | undefined : void>,
+	) => Promise<ReturnPromiseType extends true ? DataType | undefined : void>,
 	UseMutationResult<
-		RecordType | undefined,
+		DataType | undefined,
 		MutationErrorType,
-		Partial<DeleteParams<RecordType> & { resource?: ResourceType }>,
+		Partial<DeleteParams<DataType> & { resource?: string }>,
 		OnMutateResult
 	> & { isLoading: boolean },
 ];

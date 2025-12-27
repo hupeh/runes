@@ -5,13 +5,8 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
-import type {
-	Data,
-	GetManyReferenceParams,
-	GetManyReferenceResult,
-	InferDataType,
-	Resource,
-} from "./types";
+import type { Data } from "../types";
+import type { GetManyReferenceParams, GetManyReferenceResult } from "./types";
 import { useDataProvider } from "./use-data-provider";
 
 /**
@@ -25,18 +20,16 @@ import { useDataProvider } from "./use-data-provider";
  *
  * 使用相同参数第二次调用此 hook 时，会返回缓存的结果，直到响应到达为止。
  *
- * @param {string} resource 资源名称，例如 'posts'
- * @param {Params} params getManyReference 参数 { target, id, pagination, sort, filter, meta }
- * @param {Object} options 传递给 queryClient 的选项对象
+ * @param resource 资源名称，例如 'posts'
+ * @param params getManyReference 参数，包含：
+ * - target: 目标资源键（外键字段），例如 'post_id'
+ * - id: 要在 target 中查找的记录标识符，例如 '123'
+ * - pagination: 请求分页参数 { page, perPage }，例如 { page: 1, perPage: 10 }
+ * - sort: 请求排序参数 { field, order }，例如 { field: 'id', order: 'DESC' }
+ * - filter: 请求过滤器，例如 { title: 'hello, world' }
+ * - meta: 可选的元数据参数
+ * @param options 传递给 queryClient 的选项对象
  * 可以包含在成功或失败时执行的副作用，例如 { onSuccess: () => { refresh(); } }
- *
- * @typedef Params
- * @prop params.target 目标资源键（外键字段），例如 'post_id'
- * @prop params.id 要在 target 中查找的记录标识符，例如 '123'
- * @prop params.pagination 请求分页参数 { page, perPage }，例如 { page: 1, perPage: 10 }
- * @prop params.sort 请求排序参数 { field, order }，例如 { field: 'id', order: 'DESC' }
- * @prop params.filter 请求过滤器，例如 { title: 'hello, world' }
- * @prop params.meta 可选的元数据参数
  *
  * @returns 当前请求状态。解构为 { data, total, error, isPending, refetch }
  *
@@ -84,14 +77,13 @@ import { useDataProvider } from "./use-data-provider";
  * };
  */
 export const useGetManyReference = <
-	ResourceType extends Resource = Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
+	DataType extends Data = any,
 	ErrorType = Error,
 >(
-	resource: ResourceType,
+	resource: string,
 	params: Partial<GetManyReferenceParams> = {},
-	options: UseGetManyReferenceHookOptions<RecordType, ErrorType> = {},
-): UseGetManyReferenceHookValue<RecordType, ErrorType> => {
+	options: UseGetManyReferenceHookOptions<DataType, ErrorType> = {},
+): UseGetManyReferenceHookValue<DataType, ErrorType> => {
 	const {
 		target,
 		id,
@@ -104,7 +96,7 @@ export const useGetManyReference = <
 	const queryClient = useQueryClient();
 	const { onError, onSuccess, onSettled, ...queryOptions } = options;
 
-	const result = useQuery<GetManyReferenceResult<RecordType>, ErrorType>({
+	const result = useQuery<GetManyReferenceResult<DataType>, ErrorType>({
 		queryKey: [
 			resource,
 			"getManyReference",
@@ -115,18 +107,15 @@ export const useGetManyReference = <
 				// check at runtime to support partial parameters with the enabled option
 				return Promise.reject(new Error("target and id are required"));
 			}
-			return await dataProvider.getManyReference<ResourceType, RecordType>(
-				resource,
-				{
-					target,
-					id,
-					pagination,
-					sort,
-					filter,
-					meta,
-					signal: queryParams.signal,
-				},
-			);
+			return await dataProvider.getManyReference<DataType>(resource, {
+				target,
+				id,
+				pagination,
+				sort,
+				filter,
+				meta,
+				signal: queryParams.signal,
+			});
 		},
 		...queryOptions,
 	});
@@ -165,7 +154,7 @@ export const useGetManyReference = <
 					}
 				: result,
 		[result],
-	) as unknown as UseQueryResult<RecordType[], ErrorType> & {
+	) as unknown as UseQueryResult<DataType[], ErrorType> & {
 		total?: number;
 		pageInfo?: {
 			hasNextPage?: boolean;
@@ -179,19 +168,19 @@ export const useGetManyReference = <
  * useGetManyReference hook 的选项类型
  */
 export type UseGetManyReferenceHookOptions<
-	RecordType extends Data,
+	DataType extends Data,
 	ErrorType,
 > = Omit<
-	UseQueryOptions<GetManyReferenceResult<RecordType>, ErrorType>,
+	UseQueryOptions<GetManyReferenceResult<DataType>, ErrorType>,
 	"queryKey" | "queryFn"
 > & {
 	/** 成功时的回调函数 */
-	onSuccess?: (data: GetManyReferenceResult<RecordType>) => void;
+	onSuccess?: (data: GetManyReferenceResult<DataType>) => void;
 	/** 失败时的回调函数 */
 	onError?: (error: ErrorType) => void;
 	/** 完成时的回调函数（无论成功或失败） */
 	onSettled?: (
-		data?: GetManyReferenceResult<RecordType>,
+		data?: GetManyReferenceResult<DataType>,
 		error?: ErrorType | null,
 	) => void;
 };
@@ -200,9 +189,9 @@ export type UseGetManyReferenceHookOptions<
  * useGetManyReference hook 的返回值类型
  */
 export type UseGetManyReferenceHookValue<
-	RecordType extends Data,
+	DataType extends Data,
 	ErrorType,
-> = UseQueryResult<RecordType[], ErrorType> & {
+> = UseQueryResult<DataType[], ErrorType> & {
 	/** 总记录数 */
 	total?: number;
 	/** 分页信息 */

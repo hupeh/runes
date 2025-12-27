@@ -4,7 +4,8 @@ import {
 	useQuery,
 } from "@tanstack/react-query";
 import { useEffect } from "react";
-import type { Data, GetOneParams, InferDataType, Resource } from "./types";
+import type { Data } from "../types";
+import type { GetOneParams } from "./types";
 import { useDataProvider } from "./use-data-provider";
 
 /**
@@ -19,16 +20,13 @@ import { useDataProvider } from "./use-data-provider";
  * 使用相同参数第二次调用此 hook 时，会返回缓存的结果，直到响应到达为止。
  *
  * @param resource 资源名称，例如 'posts'
- * @param {Params} params getOne 参数 { id, meta }，例如 { id: 123 }
- * @param {Options} options 传递给 react-query queryClient 的选项对象
- *
- * @typedef Params
- * @prop id 资源标识符，例如 123
- *
- * @typedef Options
- * @prop enabled 条件运行查询的标志。如果为 false，查询将不会运行
- * @prop onSuccess 成功时执行的副作用函数，例如 { onSuccess: { refresh: true } }
- * @prop onError 失败时执行的副作用函数，例如 { onError: error => notify(error.message) }
+ * @param params getOne 参数，包含：
+ * - id: 资源标识符，例如 123
+ * - meta: 可选的元数据参数
+ * @param options 传递给 react-query queryClient 的选项对象，包含：
+ * - enabled: 条件运行查询的标志。如果为 false，查询将不会运行
+ * - onSuccess: 成功时执行的副作用函数，例如 { onSuccess: { refresh: true } }
+ * - onError: 失败时执行的副作用函数，例如 { onError: error => notify(error.message) }
  *
  * @returns 当前请求状态。解构为 { data, error, isPending, refetch }
  *
@@ -60,30 +58,29 @@ import { useDataProvider } from "./use-data-provider";
  *     );
  * };
  */
-export function useGetOne<
-	ResourceType extends Resource,
-	RecordType extends InferDataType<ResourceType> = InferDataType<ResourceType>,
-	ErrorType = Error,
->(
-	resource: ResourceType,
-	{ id, meta }: Partial<GetOneParams<RecordType>>,
-	options: UseGetOneOptions<RecordType, ErrorType> = {},
-): UseGetOneHookValue<RecordType, ErrorType> {
+export function useGetOne<DataType extends Data = any, ErrorType = Error>(
+	resource: string,
+	{ id, meta }: Partial<GetOneParams<DataType>>,
+	options: UseGetOneOptions<DataType, ErrorType> = {},
+): UseGetOneHookValue<DataType, ErrorType> {
 	const dataProvider = useDataProvider();
 	const { onError, onSuccess, onSettled, enabled, ...queryOptions } = options;
 
-	const result = useQuery<RecordType, ErrorType>({
+	const result = useQuery<DataType, ErrorType>({
 		// Sometimes the id comes as a string (e.g. when read from the URL in a Show view).
 		// Sometimes the id comes as a number (e.g. when read from a Record in useGetList response).
 		// As the react-query cache is type-sensitive, we always stringify the identifier to get a match
 		queryKey: [resource, "getOne", { id: String(id), meta }],
-		queryFn: ({ signal }) => {
+		queryFn: async ({ signal }) => {
 			if (id == null) {
-				return Promise.reject(new Error("useGetOne: id cannot be null"));
+				throw new Error("useGetOne: id cannot be null");
 			}
-			return dataProvider
-				.getOne<ResourceType, RecordType>(resource, { id, meta, signal })
-				.then(({ data }) => data);
+			const { data } = await dataProvider.getOne<DataType>(resource, {
+				id,
+				meta,
+				signal,
+			});
+			return data;
 		},
 		// Only disable the query if enabled is explicitly false or if id is undefined
 		// If id is null (explicitly set to null), we let the query run and error
@@ -116,22 +113,22 @@ export function useGetOne<
 /**
  * useGetOne hook 的选项类型
  */
-export type UseGetOneOptions<RecordType extends Data, ErrorType = Error> = Omit<
-	UseQueryOptions<RecordType, ErrorType>,
+export type UseGetOneOptions<DataType extends Data, ErrorType = Error> = Omit<
+	UseQueryOptions<DataType, ErrorType>,
 	"queryKey" | "queryFn"
 > & {
 	/** 成功时的回调函数 */
-	onSuccess?: (data: RecordType) => void;
+	onSuccess?: (data: DataType) => void;
 	/** 失败时的回调函数 */
 	onError?: (error: ErrorType) => void;
 	/** 完成时的回调函数（无论成功或失败） */
-	onSettled?: (data?: RecordType, error?: ErrorType | null) => void;
+	onSettled?: (data?: DataType, error?: ErrorType | null) => void;
 };
 
 /**
  * useGetOne hook 的返回值类型
  */
 export type UseGetOneHookValue<
-	RecordType extends Data,
+	DataType extends Data,
 	ErrorType = Error,
-> = UseQueryResult<RecordType, ErrorType>;
+> = UseQueryResult<DataType, ErrorType>;

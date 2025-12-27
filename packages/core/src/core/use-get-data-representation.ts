@@ -3,13 +3,13 @@ import { isValidElement, type ReactNode } from "react";
 import { useResourceDefinition } from "./use-resource-definition";
 
 /**
- * Get the default representation of a data (either a string or a React node)
+ * 获取数据的默认表示形式（字符串或 React 节点）
  *
- * @example // No customization
+ * @example // 无自定义
  * const getDataRepresentation = useGetDataRepresentation('posts');
  * getDataRepresentation({ id: 1, title: 'Hello' }); // => "#1"
  *
- * @example // With <Resource name="posts" dataRepresentation="title" />
+ * @example // 使用 <Resource name="posts" dataRepresentation="title" />
  * const getDataRepresentation = useGetDataRepresentation('posts');
  * getDataRepresentation({ id: 1, title: 'Hello' }); // => "Hello"
  */

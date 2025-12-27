@@ -1,9 +1,11 @@
 import { useSourceContext } from "./use-source-context";
 
 /**
- * Get the source prop for a field or input by checking if a source context is available.
- * @param {string} source The original source prop
- * @returns {string} The source prop, either the original one or the one modified by the SourceContext.
+ * 通过检查是否存在 source 上下文来获取字段或输入的 source prop
+ *
+ * @param {string} source 原始的 source prop
+ * @returns {string} source prop，可能是原始值或由 SourceContext 修改后的值
+ *
  * @example
  * const MyInput = ({ source, ...props }) => {
  *   const finalSource = useWrappedSource(source);

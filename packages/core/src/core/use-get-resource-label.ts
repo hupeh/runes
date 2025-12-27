@@ -5,9 +5,12 @@ import { useResourceDefinitions } from "./use-resource-definitions";
 export type GetResourceLabel = (resource: string, count?: number) => string;
 
 /**
- * A hook which returns function to get a translated resource name. It will use the label option of the `Resource` component if it was provided.
+ * 返回获取翻译后的资源名称的函数的 Hook
  *
- * @returns {GetResourceLabel} A function which takes a resource name and an optional number indicating the number of items (used for pluralization) and returns a translated string.
+ * 如果提供了 Resource 组件的 label 选项，将使用该选项
+ *
+ * @returns {GetResourceLabel} 一个函数，接受资源名称和可选的数量（用于复数形式），返回翻译后的字符串
+ *
  * @example
  * const Menu = () => {
  *     const resources = useResourceDefinitions();

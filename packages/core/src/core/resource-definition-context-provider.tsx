@@ -4,13 +4,13 @@ import type { ResourceDefinition } from "../types";
 import { ResourceDefinitionContext } from "./resource-definition-context";
 
 /**
- * Context to store the current resource Definition.
+ * 存储当前资源定义的上下文
  *
- * Use the useResourceDefinition() hook to read the context.
+ * 使用 useResourceDefinition() hook 读取上下文
  *
  * @example
  *
- * import { useResourceDefinition, useTranslate } from 'ra-core';
+ * import { useResourceDefinition, useTranslate } from '@runes/core';
  *
  * const PostMenuItem = () => {
  *     const { name, icon } = useResourceDefinition({ resource: 'posts' });

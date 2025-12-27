@@ -1,20 +1,20 @@
 import { createContext } from "react";
 
 export type SourceContextValue = {
-	/*
-	 * Returns the source for a field or input, modified according to the context.
+	/**
+	 * 返回字段或输入的 source，根据上下文进行修改
 	 */
 	getSource: (source: string) => string;
-	/*
-	 * Returns the label for a field or input, modified according to the context. Returns a translation key.
+	/**
+	 * 返回字段或输入的标签，根据上下文进行修改。返回翻译键
 	 */
 	getLabel: (source: string) => string;
 };
 
 /**
- * Context that provides a function that accept a source and return getters for the modified source and label.
+ * 提供一个函数的上下文，该函数接受 source 并返回修改后的 source 和 label 的 getter
  *
- * This allows some special inputs to prefix or suffix the source of their children.
+ * 这允许某些特殊输入为其子元素的 source 添加前缀或后缀
  *
  * @private
  *

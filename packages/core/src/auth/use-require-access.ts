@@ -1,6 +1,6 @@
-import { useBasename } from "@runes/core";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
+import { useBasename } from "../core";
 import {
 	type UseCanAccessOptions,
 	type UseCanAccessResult,

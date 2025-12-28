@@ -1,4 +1,4 @@
-import type { RedirectionSideEffect } from "@runes/core";
+import type { RedirectionSideEffect } from "../core";
 
 /**
  * 用户身份信息接口

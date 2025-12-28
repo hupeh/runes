@@ -19,11 +19,18 @@
 	"author": "",
 	"license": "ISC",
 	"dependencies": {
+		"@hookform/resolvers": "^5.2.2",
+		"@runes/data-fakerest": "workspace:*",
 		"@runes/i18n": "workspace:*",
+		"@runes/i18n-polyglot": "workspace:*",
+		"@runes/languages": "workspace:*",
 		"@runes/misc": "workspace:*",
 		"@runes/store": "workspace:*",
 		"@tanstack/react-query": "^5.90.12",
+		"@tiptap/react": "^3.14.0",
+		"date-fns": "^4.1.0",
 		"inflection": "^3.0.2",
+		"jsonexport": "^3.2.0",
 		"lodash": "^4.17.21",
 		"react-hook-form": "^7.69.0"
 	},
@@ -33,6 +40,7 @@
 		"@runes/typescript-config": "workspace:*",
 		"@testing-library/jest-dom": "^6.6.3",
 		"@testing-library/react": "^16.1.0",
+		"@types/jsonexport": "^3.0.5",
 		"@types/lodash": "^4.17.21",
 		"@types/node": "^20.0.0",
 		"@types/node-polyglot": "^2.5.0",
@@ -45,7 +53,8 @@
 		"react": "^19.0.2",
 		"react-router": "^7.11.0",
 		"typescript": "^5.9.3",
-		"vitest": "^4.0.16"
+		"vitest": "^4.0.16",
+		"yup": "^1.7.1"
 	},
 	"peerDependencies": {
 		"react": "^19.0.0",
